@@ -4,7 +4,7 @@ There are two separate topics here: **the hub in a container**, and **apps in co
 
 ## The hub in a container
 
-The image `kavehbc/streamhub` (built from the repository's `Dockerfile` by `make docker-build`; each [release](../development/building.md#releases) publishes it as `ghcr.io/kavehbc/streamhub:<version>` and `:latest`):
+The image [`kavehbc/streamhub`](https://hub.docker.com/r/kavehbc/streamhub) on Docker Hub (built from the repository's `Dockerfile` by `make docker-build`; each [release](../development/building.md#releases) also publishes it as `ghcr.io/kavehbc/streamhub:<version>` and `:latest`):
 
 - has Python 3.12, the `tools`, `examples` and `oidc` extras, and the `docker` client;
 - runs as the non-root user `streamhub` (uid 1000), in supervised mode (`STREAMHUB_SUPERVISED=1`);

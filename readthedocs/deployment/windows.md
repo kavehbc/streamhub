@@ -5,7 +5,7 @@ The same code runs on Windows and Linux; CI tests both. This page covers what di
 ## Install
 
 1. Install Python 3.11+ or Miniconda.
-2. `pip install "streamhub[tools] @ git+https://github.com/kavehbc/streamhub"`, or from a clone, `pip install -e ".[tools]"` (or `make.bat install`).
+2. `pip install "py-streamhub[tools]"` (from PyPI), or from a clone, `pip install -e ".[tools]"` (or `make.bat install`).
 3. Create a config: `streamhub init C:\streamhub-config`.
 4. Set `"virtual-environment"` to an env name or, better for a service, an environment **folder** such as `C:/conda/envs/apps`. Or give each app a `python_executable`.
 

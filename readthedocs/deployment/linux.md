@@ -5,7 +5,7 @@
 ```bash
 sudo useradd --system --create-home --home-dir /opt/streamhub streamhub
 sudo -u streamhub python3 -m venv /opt/streamhub/.venv
-sudo -u streamhub /opt/streamhub/.venv/bin/pip install "streamhub[tools,oidc] @ git+https://github.com/kavehbc/streamhub"
+sudo -u streamhub /opt/streamhub/.venv/bin/pip install "py-streamhub[tools,oidc]"
 sudo mkdir -p /etc/streamhub && sudo chown streamhub: /etc/streamhub
 sudo -u streamhub /opt/streamhub/.venv/bin/streamhub init /etc/streamhub
 ```

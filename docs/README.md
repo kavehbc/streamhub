@@ -2,7 +2,7 @@
 
 Streamhub is a Tornado-based **reverse proxy and app launcher** that serves many Streamlit and Python web apps (Flask, Dash, FastAPI, …) behind **one public port**. Each app runs in its own process and environment and is reached at `http://host:8500/<app_id>/`. Apps are declared in JSON files. Version 2.2 runs on Linux, on Windows and in Docker, and can run apps as local processes, Docker containers or Kubernetes pods.
 
-It is an extended fork of [streamlit-launchpad](https://github.com/ideonate/streamlit-launchpad). The end-user guide is the root [README.md](../README.md), which is also shown by `help.cmd`. The full user documentation, with screenshots, is the Read the Docs site built from [readthedocs/](../readthedocs/README.md).
+It is an extended fork of [streamlit-launchpad](https://github.com/ideonate/streamlit-launchpad). The end-user guide is the root [README.md](../README.md), which is also shown by `help.cmd`. The full user documentation, with screenshots, is [streamhub.readthedocs.io](https://streamhub.readthedocs.io/), built from [readthedocs/](../readthedocs/README.md). The package is [py-streamhub](https://pypi.org/project/py-streamhub/) on PyPI and the image [kavehbc/streamhub](https://hub.docker.com/r/kavehbc/streamhub) on Docker Hub.
 
 ## Documents
 

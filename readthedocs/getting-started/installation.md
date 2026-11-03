@@ -6,18 +6,22 @@ Streamhub needs **Python 3.11 or later** on Linux or Windows, unless you use the
 
 ::::{tab-set}
 
-:::{tab-item} pip (from GitHub)
+:::{tab-item} pip (from PyPI)
+The package is [py-streamhub](https://pypi.org/project/py-streamhub/) on PyPI; the command it installs is `streamhub`.
+
 ```bash
-pip install "streamhub[tools,examples] @ git+https://github.com/kavehbc/streamhub"
+pip install "py-streamhub[tools,examples]"
 streamhub version
 ```
+
+The latest commit from GitHub: `pip install "py-streamhub[tools,examples] @ git+https://github.com/kavehbc/streamhub"`.
 :::
 
 :::{tab-item} pipx (isolated tool)
 Download the wheel from a [GitHub release](https://github.com/kavehbc/streamhub/releases), or build one ([Building](../development/building.md#wheel-and-sdist)), then:
 
 ```bash
-pipx install "dist/streamhub-<version>-py3-none-any.whl[tools]"   # or: pip install "<wheel>[tools]"
+pipx install "dist/py_streamhub-<version>-py3-none-any.whl[tools]"   # or: pip install "<wheel>[tools]"
 ```
 :::
 
@@ -60,7 +64,7 @@ The package is small: its own dependencies are only Tornado, Click and psutil (p
 | `build` | build, PyInstaller | Building the wheel and the executable |
 | `dev` | pytest, requests, PyJWT | Running the test suite |
 
-Combine them as needed: `pip install "streamhub[tools,oidc,ldap]"`.
+Combine them as needed: `pip install "py-streamhub[tools,oidc,ldap]"`.
 
 ```{note}
 The hub and its apps don't have to share a Python environment. Each app runs in the environment it names (a conda env name or an environment folder). An app's environment needs its own framework, for example `streamlit` for a Streamlit app. See [Apps file](../configuration/apps.md#launching-a-process-app).
@@ -68,7 +72,7 @@ The hub and its apps don't have to share a Python environment. Each app runs in 
 
 ## Docker
 
-The image `kavehbc/streamhub` (`make docker-build`; each release publishes it as `ghcr.io/kavehbc/streamhub:<version>`) has the `tools`, `examples` and `oidc` extras and the `docker` client. It runs as a non-root user (uid 1000) in supervised mode and keeps its configuration in the `/config` volume.
+The image [`kavehbc/streamhub`](https://hub.docker.com/r/kavehbc/streamhub) on Docker Hub (`make docker-build` builds it; each release also publishes it as `ghcr.io/kavehbc/streamhub:<version>`) has the `tools`, `examples` and `oidc` extras and the `docker` client. It runs as a non-root user (uid 1000) in supervised mode and keeps its configuration in the `/config` volume.
 
 ```bash
 docker run -p 8500:8500 -v streamhub-config:/config kavehbc/streamhub   # your hub: open it and follow the setup page

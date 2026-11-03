@@ -43,8 +43,8 @@ The integration tests start a real hub and the demo apps; they are skipped when 
 
 ```bash
 make install-build
-make dist           # python -m build → dist/streamhub-<version>-py3-none-any.whl and .tar.gz
-pipx install "dist/streamhub-<version>-py3-none-any.whl[tools]"
+make dist           # python -m build → dist/py_streamhub-<version>-py3-none-any.whl and .tar.gz
+pipx install "dist/py_streamhub-<version>-py3-none-any.whl[tools]"
 ```
 
 The wheel bundles the templates, static files, the starter config and the demo apps.

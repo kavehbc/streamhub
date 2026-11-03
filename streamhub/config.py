@@ -588,7 +588,7 @@ def _check_oidc(oidc):
     except ImportError:
         has_crypto = False
     if not has_crypto:
-        raise ConfigError("oidc: ID token signatures need PyJWT with cryptography: pip install 'streamhub[oidc]'")
+        raise ConfigError("oidc: ID token signatures need PyJWT with cryptography: pip install 'py-streamhub[oidc]'")
 
 
 def _check_ldap(ldap):

@@ -6,14 +6,16 @@ stop when idle or on a schedule, and are listed on boards that can require a log
 JSON files. Streamhub runs on **Linux and Windows**, and in Docker. Apps can also run as Docker containers or
 Kubernetes pods.
 
-The full documentation, with screenshots (getting started, user and admin guides, configuration, deployment), is the
-Read the Docs site built from [readthedocs/](readthedocs/README.md) (`make docs`). Maintainer documentation
-(architecture, every config key, operations, known issues) is in [docs/](docs/README.md).
+The full documentation, with screenshots (getting started, user and admin guides, configuration, deployment), is at
+**[streamhub.readthedocs.io](https://streamhub.readthedocs.io/)**, built from [readthedocs/](readthedocs/README.md) (`make docs`). Maintainer
+documentation (architecture, every config key, operations, known issues) is in [docs/](docs/README.md).
+
+Package on PyPI: [py-streamhub](https://pypi.org/project/py-streamhub/). Docker image on Docker Hub: [kavehbc/streamhub](https://hub.docker.com/r/kavehbc/streamhub).
 
 ## Quick start
 
 ```bash
-pip install "streamhub[tools,examples] @ git+https://github.com/kavehbc/streamhub"   # or, in a clone: pip install -e ".[tools,examples]"
+pip install "py-streamhub[tools,examples]"   # or, in a clone: pip install -e ".[tools,examples]"
 streamhub demo          # the demo apps on http://localhost:8500, login admin / admin
 ```
 
@@ -219,6 +221,9 @@ ___
 
 ### Version 2.3
 *Update Date: Nov. 2026*
+- The package (distribution) is now `py-streamhub`, since `streamhub` is taken on PyPI: install it with
+  `pip install "py-streamhub[tools]"`; wheels are `py_streamhub-<version>-py3-none-any.whl`. The import package and
+  the `streamhub` command are unchanged. The docs link to the Read the Docs site, PyPI and the Docker Hub image
 - Releases from CI: CI runs on pushes and pull requests to `main` or `master` only. A push that passes and
   carries a new version publishes the GitHub release `v<version>` with the wheel, the sdist and the Docker image
   tarball, and pushes the image to `ghcr.io/kavehbc/streamhub:<version>` and `:latest`

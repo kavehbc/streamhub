@@ -57,7 +57,7 @@ def config_warnings(settings, data):
     if settings.ldap.get("allow-plaintext"):
         warnings.append("ldap: 'allow-plaintext' sends passwords unencrypted")
     if settings.ldap and importlib.util.find_spec("ldap3") is None:
-        warnings.append("ldap is configured but ldap3 is not installed: pip install 'streamhub[ldap]'")
+        warnings.append("ldap is configured but ldap3 is not installed: pip install 'py-streamhub[ldap]'")
     for name in ("ssl_cert", "ssl_key"):
         path = getattr(settings, name)
         if settings.ssl_port and path and not Path(path).is_file():

@@ -81,7 +81,7 @@ def demo(port, debug, folder):
     """Run the bundled demo: a Streamlit, a Flask and a FastAPI app on a public board.
 
     The demo is copied to a writable folder first. Its admin login is admin / admin unless
-    STREAMHUB_ADMIN_PASSWORD is set. The apps need: pip install "streamhub[examples]".
+    STREAMHUB_ADMIN_PASSWORD is set. The apps need: pip install "py-streamhub[examples]".
     """
     from streamhub import auth
     from streamhub.bootstrap import prepare_demo

@@ -137,7 +137,7 @@ Users can sign in with an OpenID Connect provider (button on the login page), wi
 | `ca-file` | PEM file of the CA that signed the directory's certificate (default: the system CAs). Certificates and host names are always verified. |
 | `allow-plaintext` | Development only: allow `ldap://` without `starttls`, so passwords cross the network unencrypted |
 
-LDAP needs the `ldap` extra: `pip install "streamhub[ldap]"`. OpenID Connect needs the `oidc` extra (PyJWT): `pip install "streamhub[oidc]"`; the hub refuses to start with `oidc` set but PyJWT missing.
+LDAP needs the `ldap` extra: `pip install "py-streamhub[ldap]"`. OpenID Connect needs the `oidc` extra (PyJWT): `pip install "py-streamhub[oidc]"`; the hub refuses to start with `oidc` set but PyJWT missing.
 
 **Group mapping:**
 

@@ -2,11 +2,12 @@
 
 ## Install
 
-Streamhub needs Python ≥ 3.11 on Linux or Windows, unless you use the [executable](#build). Installing it adds the `streamhub` command. From GitHub, or as a tool in its own environment from a [built or released wheel](#releases):
+Streamhub needs Python ≥ 3.11 on Linux or Windows, unless you use the [executable](#build). The distribution name is `py-streamhub` ([PyPI](https://pypi.org/project/py-streamhub/)); the import package and the command stay `streamhub`. Installing it adds the `streamhub` command. From PyPI, from GitHub, or as a tool in its own environment from a [built or released wheel](#releases):
 
 ```bash
-pip install "streamhub[tools] @ git+https://github.com/kavehbc/streamhub"
-pipx install "dist/streamhub-2.3.0-py3-none-any.whl[tools]"   # or: pip install "<wheel>[tools]"
+pip install "py-streamhub[tools]"
+pip install "py-streamhub[tools] @ git+https://github.com/kavehbc/streamhub"   # the latest commit
+pipx install "dist/py_streamhub-2.3.0-py3-none-any.whl[tools]"   # or: pip install "<wheel>[tools]"
 ```
 
 From a checkout (the repository root):
@@ -89,7 +90,7 @@ Two build outputs, both in `dist/`. Install the tools once with `make install-bu
 
 | Command | Output | Runs on |
 |---|---|---|
-| `make dist` (`python -m build`) | `streamhub-<version>-py3-none-any.whl` and `.tar.gz` | Any OS with Python ≥ 3.11: `pip install` or `pipx install` it, then `streamhub run <config>` |
+| `make dist` (`python -m build`) | `py_streamhub-<version>-py3-none-any.whl` and `.tar.gz` | Any OS with Python ≥ 3.11: `pip install` or `pipx install` it, then `streamhub run <config>` |
 | `make exe` (PyInstaller) | `streamhub` (`streamhub.exe` on Windows), one file of about 10 MB | The OS it was built on; no Python needed for the hub itself |
 
 `make.bat dist` and `make.bat exe` do the same on Windows. The executable is built from [deploy/pyinstaller/streamhub.spec](../deploy/pyinstaller/streamhub.spec). It bundles the templates, static files, the starter config, the demo apps, the `help.cmd` page and this README. To build:

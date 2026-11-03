@@ -1,6 +1,7 @@
 # local files #
 # The deployment config is yours: create it with `streamhub init config` or the setup page.
 config/*
+.pypirc
 !config/README.md
 streamhub-users.json
 .streamhub-secret

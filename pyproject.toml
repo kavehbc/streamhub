@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "streamhub"
+name = "py-streamhub"
 dynamic = ["version"]  # from streamhub/__init__.py, the only place to change it
 description = "Web-based platform to launch and serve multiple Streamlit/Python apps behind one port"
 readme = "README.md"
@@ -38,6 +38,10 @@ dev = ["pytest>=7", "requests", "pyjwt[crypto]>=2.8"]
 
 [project.urls]
 Homepage = "https://github.com/kavehbc/streamhub"
+Documentation = "https://streamhub.readthedocs.io/"
+Source = "https://github.com/kavehbc/streamhub"
+Issues = "https://github.com/kavehbc/streamhub/issues"
+"Docker image" = "https://hub.docker.com/r/kavehbc/streamhub"
 
 [project.scripts]
 streamhub = "streamhub.cli:main"

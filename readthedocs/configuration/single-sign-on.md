@@ -21,7 +21,7 @@ Users can sign in with an **OpenID Connect** provider (a button on the login pag
 
 Works with Microsoft Entra ID (Azure AD), Okta, Keycloak, Google, Auth0 and other providers, using the authorization code flow with PKCE.
 
-1. Install the `oidc` extra: `pip install "streamhub[oidc]"`. The Docker image has it.
+1. Install the `oidc` extra: `pip install "py-streamhub[oidc]"`. The Docker image has it.
 2. Register a **confidential client** with the provider. Use the redirect URI `https://<hub host>/login/oidc/callback` and the authorization code flow, and add a groups claim.
 3. Set `oidc` and pass the client secret as `STREAMHUB_OIDC_CLIENT_SECRET`.
 4. Serve the hub over HTTPS, directly or behind a proxy with `behind-proxy`.
@@ -40,7 +40,7 @@ Works with Microsoft Entra ID (Azure AD), Okta, Keycloak, Google, Auth0 and othe
 
 ## LDAP
 
-1. Install the `ldap` extra: `pip install "streamhub[ldap]"`.
+1. Install the `ldap` extra: `pip install "py-streamhub[ldap]"`.
 2. Set `ldap`, and `STREAMHUB_LDAP_BIND_PASSWORD` for a search bind.
 3. Use `ldaps://`, or `starttls: true`, because passwords cross that connection.
 

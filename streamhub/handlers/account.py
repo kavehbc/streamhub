@@ -81,7 +81,7 @@ class LoginHandler(BaseHandler):
             found = await loop.run_in_executor(None, auth.ldap_authenticate, settings.ldap,
                                                settings.ldap_bind_password, username, password)
         except ImportError:
-            auth.log.error("LDAP is configured but ldap3 is not installed: pip install 'streamhub[ldap]'")
+            auth.log.error("LDAP is configured but ldap3 is not installed: pip install 'py-streamhub[ldap]'")
             return None
         except Exception as exc:
             auth.log.error("LDAP login for '%s' failed: %s", username, exc)

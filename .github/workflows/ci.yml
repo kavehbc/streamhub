@@ -154,7 +154,7 @@ jobs:
             echo
             echo "**Docker image:** \`docker pull $IMAGE:$VERSION\`, or \`docker load -i streamhub-$VERSION-docker-image.tar.gz\` (tagged \`$IMAGE_NAME:$VERSION\`)."
             echo
-            echo "**Wheel:** \`pipx install \"streamhub-$VERSION-py3-none-any.whl[tools]\"\`"
+            echo "**Wheel:** \`pipx install \"py_streamhub-$VERSION-py3-none-any.whl[tools]\"\`"
           } >> notes.md
           gh release create "v$VERSION" artifacts/dist/* "artifacts/streamhub-$VERSION-docker-image.tar.gz" \
             --target "$GITHUB_SHA" --title "Streamhub $VERSION" --notes-file notes.md

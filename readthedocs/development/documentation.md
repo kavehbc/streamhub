@@ -1,6 +1,6 @@
 # This documentation
 
-This site is built with [Sphinx](https://www.sphinx-doc.org/), [MyST Markdown](https://myst-parser.readthedocs.io/) and the [Furo](https://pradyunsg.me/furo/) theme, and hosted on [Read the Docs](https://readthedocs.org/). Everything it needs is in the `readthedocs/` folder of the repository.
+This site is built with [Sphinx](https://www.sphinx-doc.org/), [MyST Markdown](https://myst-parser.readthedocs.io/) and the [Furo](https://pradyunsg.me/furo/) theme, and hosted on [Read the Docs](https://readthedocs.org/) at [streamhub.readthedocs.io](https://streamhub.readthedocs.io/). Everything it needs is in the `readthedocs/` folder of the repository.
 
 ```text
 readthedocs/
