@@ -229,7 +229,7 @@ class TestPages(HubTestCase):
     def test_path_check_and_environments(self):
         admin = self.browser("admin")
         found = admin.json("/api/admin/path-check?path=streamhub-apps.json")
-        assert found["exists"] and not found["dir"] and found["path"] == str(self.dir / "streamhub-apps.json")
+        assert found["exists"] and not found["dir"] and found["path"] == str((self.dir / "streamhub-apps.json").resolve())
         (self.dir / "app").mkdir()
         (self.dir / "app" / "main.py").write_text("", encoding="utf-8")
         assert admin.json("/api/admin/path-check?path=main.py&base=app")["exists"]
@@ -452,7 +452,8 @@ class TestBackup(HubTestCase):
         stored = json.loads((self.dir / "streamhub-users.json").read_text(encoding="utf-8"))
         assert auth.is_hashed(stored["eve"]["password"])
         safety = json.loads(Path(done["safety"]).read_text(encoding="utf-8"))
-        assert Path(done["safety"]).parent == self.dir / "backups" and safety["files"]["apps"]["text"] == apps_before
+        assert Path(done["safety"]).parent == (self.dir / "backups").resolve() \
+            and safety["files"]["apps"]["text"] == apps_before
 
     def test_temp_purge(self):
         temp = self.hub.settings.temp_path
@@ -535,7 +536,7 @@ class TestWithoutConfigFile(HubTestCase):
         saved = json.loads(admin.fetch("/api/admin/files/config", "POST", json_body={
             "text": json.dumps({"site-title": "Fresh hub"}), "version": current["version"]}).body)
         assert saved["saved"] and self.hub.settings.site_title == "Fresh hub"
-        assert self.hub.settings.config_file == self.dir / "streamhub.json"
+        assert self.hub.settings.config_file == (self.dir / "streamhub.json").resolve()
 
 
 class TestInstance(HubTestCase):
@@ -547,7 +548,7 @@ class TestInstance(HubTestCase):
         assert b.cookies.get("streamhub_instance") == "hub-b"
         assert "streamhub_instance" not in b.fetch("/").headers.get("Set-Cookie", "")
         assert b.json("/api/health")["instance"] == "hub-b"
-        assert self.hub.settings.log_path == self.dir / "logs" / "hub-b"
+        assert self.hub.settings.log_path == (self.dir / "logs" / "hub-b").resolve()
 
 
 class TestLdap(HubTestCase):
@@ -718,4 +719,3 @@ class TestOidc(HubTestCase):
         b = self.browser()
         response = b.fetch("/login/oidc/?next=/")
         assert response.code == 502 and "Location" not in response.headers and b"unavailable" in response.body
-
