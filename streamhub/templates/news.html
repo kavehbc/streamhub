@@ -1,0 +1,21 @@
+<section class="sh-section sh-narrow">
+	<div class="sh-page-head">
+		<div>
+			<p class="sh-eyebrow">{{ site_title }}</p>
+			<h1 class="sh-page-title">News</h1>
+			<p class="sh-page-sub">{{ len(news) }} announcement{% if len(news) != 1 %}s{% end %}</p>
+		</div>
+		<div class="sh-filters" role="group" aria-label="Filter news">
+			<button type="button" class="sh-filter active" data-news-filter="all">All</button>
+			<button type="button" class="sh-filter" data-news-filter="warning"><i class="fa fa-exclamation-triangle"></i> Warnings</button>
+			<button type="button" class="sh-filter" data-news-filter="info"><i class="fa fa-info-circle"></i> Info</button>
+		</div>
+	</div>
+	{% if news %}
+	<div class="sh-news-list sh-timeline" id="sh-news">
+		{% for news_item in news %}{% include "_news_item.html" %}{% end %}
+	</div>
+	{% else %}
+	<div class="sh-empty" style="display: block;"><i class="fa fa-newspaper-o"></i> No announcements.</div>
+	{% end %}
+</section>

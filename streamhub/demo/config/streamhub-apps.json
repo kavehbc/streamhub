@@ -1,0 +1,71 @@
+[
+	{
+		"boards": [
+			{"name": "demo.brd", "label": "Demo", "auth": false}
+		]
+	},
+	{
+		"board": ["demo.brd"],
+		"app_id": "streamlit-demo.sl",
+		"display": "show",
+		"app_name": "Streamlit demo",
+		"description": "A minimal Streamlit app",
+		"file": "main.py",
+		"folder": "../streamlit",
+		"virtual_environment": "",
+		"auto_shutdown": true,
+		"auto_start": false,
+		"icon": "/cdf/icons/monitor.png",
+		"developer": [{"name": "Streamhub", "email": "streamhub@example.com"}],
+		"children": []
+	},
+	{
+		"board": ["demo.brd"],
+		"app_id": "flask-demo.py",
+		"display": "show",
+		"app_name": "Flask demo",
+		"description": "A Flask app behind the proxy (prefix-aware links and redirects)",
+		"file": "main.py",
+		"folder": "../flask",
+		"auto_shutdown": true,
+		"restart": "on-failure",
+		"health_path": "health/",
+		"icon": "/cdf/icons/server.png",
+		"developer": [{"name": "Streamhub", "email": "streamhub@example.com"}],
+		"children": [
+			{
+				"board": ["demo.brd"],
+				"app_id": "fastapi-demo.py",
+				"display": "show",
+				"app_name": "FastAPI demo",
+				"description": "Open /docs for the API documentation",
+				"file": "main.py",
+				"folder": "../fastapi",
+				"auto_shutdown": true,
+				"icon": "/cdf/icons/gear-512.png",
+				"developer": [{"name": "Streamhub", "email": "streamhub@example.com"}]
+			}
+		]
+	},
+	{
+		"board": ["demo.brd"],
+		"app_id": "streamhub-docs.url",
+		"display": "show",
+		"app_name": "Streamhub on GitHub",
+		"description": "Source code and documentation",
+		"url": "https://github.com/kavehbc/streamhub",
+		"icon": "/cdf/icons/help.png",
+		"developer": [],
+		"children": []
+	},
+	{
+		"board": ["demo.brd"],
+		"app_id": "help.cmd",
+		"display": "show",
+		"app_name": "Help",
+		"description": "Streamhub user guide",
+		"icon": "/cdf/icons/help.png",
+		"developer": [],
+		"children": []
+	}
+]

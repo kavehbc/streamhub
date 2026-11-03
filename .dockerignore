@@ -1,0 +1,14 @@
+.git
+**/__pycache__
+**/*.pyc
+**/logs
+**/temp
+**/.streamhub-secret
+**/.streamhub-sessions.sqlite3*
+**/streamhub-users.json
+.env
+cert/*.pem
+docs
+tests
+config
+readthedocs

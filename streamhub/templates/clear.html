@@ -1,0 +1,12 @@
+{% extends "_page.html" %}
+{% block title %}Memory cleaned{% end %}
+{% block panel_top %}<div class="sh-panel-icon is-ok" aria-hidden="true"><i class="fa fa-check"></i></div>{% end %}
+{% block heading %}Memory cleaned{% end %}
+{% block body %}
+{% if all_apps %}
+<p class="text-center">All apps running under {{ site_title }} have been stopped, and the temporary folder has been emptied.</p>
+{% else %}
+<p class="text-center">Apps with <code>auto_shutdown</code> have been stopped, and the temporary folder has been emptied.</p>
+{% end %}
+<div class="sh-actions-center"><a class="btn sh-btn-primary" href="/">Back to {{ site_title }}</a></div>
+{% end %}

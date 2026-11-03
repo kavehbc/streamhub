@@ -1,0 +1,8 @@
+{% extends "_page.html" %}
+{% block title %}{{ title }}{% end %}
+{% block panel_top %}<div class="sh-panel-icon" aria-hidden="true"><i class="fa fa-info"></i></div>{% end %}
+{% block heading %}{{ title }}{% end %}
+{% block body %}
+<p class="text-center">{{ message }}</p>
+<div class="sh-actions-center"><a class="btn sh-btn-primary" href="/">Back to {{ site_title }}</a></div>
+{% end %}

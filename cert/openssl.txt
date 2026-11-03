@@ -1,0 +1,6 @@
+# Streamhub does not ship certificates. Prefer terminating TLS at a reverse proxy (nginx, Caddy, IIS).
+# For a quick self-signed certificate (files are git-ignored):
+openssl req -x509 -newkey rsa:4096 -nodes -keyout cert/key.pem -out cert/cert.pem -days 365 -subj "/CN=localhost"
+
+# Then set in streamhub.json:
+#   "ssl_port": 8443, "ssl-cert": "cert/cert.pem", "ssl-key": "cert/key.pem"

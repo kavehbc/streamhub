@@ -1,0 +1,160 @@
+name: CI
+
+# Tests run on pushes and pull requests to main or master. A push also builds the wheel, the sdist and the Docker
+# image, and publishes them as the release v<version> (streamhub/__init__.py) when that release doesn't exist yet.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+permissions:
+  contents: read
+
+env:
+  # The Docker image name, as in make docker-build and docker-compose.yml.
+  IMAGE_NAME: kavehbc/streamhub
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ["3.11", "3.12", "3.13"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m pip install -e ".[tools,examples,dev]"
+      - run: python -m pytest -q
+      - run: python -m streamhub check streamhub/demo/config
+      - run: python -m streamhub init ci-hub --yes --admin-password ci-password && python -m streamhub check ci-hub
+
+  # The oldest supported versions of the hub's own dependencies (no Streamlit: integration tests skip).
+  minimum-versions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install -e ".[dev]" -c deploy/constraints-minimum.txt
+      - run: python -m pytest -q
+
+  # Known vulnerabilities in the dependencies of a production install.
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install pip-audit -e ".[tools,oidc,ldap]"
+      - run: pip-audit --skip-editable
+
+  # The wheel and sdist (make dist), checked by installing the wheel into a clean environment.
+  dist:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - id: version
+        run: echo "version=$(python -I -c 'import runpy; print(runpy.run_path("streamhub/__init__.py")["__version__"])')" >> "$GITHUB_OUTPUT"
+      - run: python -m pip install build
+      - run: python -m build
+      - run: |
+          python -m venv /tmp/wheel-check
+          /tmp/wheel-check/bin/pip install dist/*.whl
+          /tmp/wheel-check/bin/streamhub init /tmp/wheel-hub --yes --admin-password ci-password
+          /tmp/wheel-check/bin/streamhub check /tmp/wheel-hub
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # The source label links the image pushed to ghcr.io to this repository.
+      - run: docker build --label "org.opencontainers.image.source=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" -t "$IMAGE_NAME:latest" .
+      - run: |
+          docker run -d --name hub -p 8500:8500 -e STREAMHUB_ADMIN_PASSWORD=ci "$IMAGE_NAME:latest"
+          for i in $(seq 30); do curl -fs http://127.0.0.1:8500/api/health && exit 0; sleep 1; done
+          docker logs hub; exit 1
+      # The tarball has the tags of make docker-build: kavehbc/streamhub:<version> and :latest.
+      - if: github.event_name == 'push'
+        run: |
+          version=$(python3 -I -c 'import runpy; print(runpy.run_path("streamhub/__init__.py")["__version__"])')
+          docker tag "$IMAGE_NAME:latest" "$IMAGE_NAME:$version"
+          docker save "$IMAGE_NAME:$version" "$IMAGE_NAME:latest" | gzip > streamhub-docker-image.tar.gz
+      - if: github.event_name == 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-image
+          path: streamhub-docker-image.tar.gz
+          if-no-files-found: error
+          compression-level: 0
+
+  # Publishes v<version> once every other job passed: the image to ghcr.io/kavehbc/streamhub:<version> and :latest,
+  # then a GitHub release with the wheel, the sdist and the image tarball. A version already released is skipped.
+  release:
+    if: github.event_name == 'push'
+    needs: [test, minimum-versions, audit, dist, docker]
+    runs-on: ubuntu-latest
+    concurrency:
+      group: release
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      packages: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      VERSION: ${{ needs.dist.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: check
+        run: |
+          if gh release view "v$VERSION" > /dev/null 2>&1; then
+            echo "::notice::Release v$VERSION exists already; bump __version__ in streamhub/__init__.py to publish a new one."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.check.outputs.skip == 'false'
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - if: steps.check.outputs.skip == 'false'
+        name: Push the image to GitHub Container Registry
+        run: |
+          image="ghcr.io/$IMAGE_NAME"
+          echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          docker load -i artifacts/docker-image/streamhub-docker-image.tar.gz
+          docker tag "$IMAGE_NAME:$VERSION" "$image:$VERSION"
+          docker tag "$IMAGE_NAME:$VERSION" "$image:latest"
+          docker push "$image:$VERSION"
+          docker push "$image:latest"
+          echo "IMAGE=$image" >> "$GITHUB_ENV"
+      - if: steps.check.outputs.skip == 'false'
+        name: Create the release
+        run: |
+          mv artifacts/docker-image/streamhub-docker-image.tar.gz "artifacts/streamhub-$VERSION-docker-image.tar.gz"
+          # The README changelog section of this major.minor version, then how to get the image.
+          awk -v h="### Version ${VERSION%.*}" '$0 == h {f = 1; next} f && /^##/ {exit} f' README.md > notes.md
+          {
+            echo
+            echo "**Docker image:** \`docker pull $IMAGE:$VERSION\`, or \`docker load -i streamhub-$VERSION-docker-image.tar.gz\` (tagged \`$IMAGE_NAME:$VERSION\`)."
+            echo
+            echo "**Wheel:** \`pipx install \"streamhub-$VERSION-py3-none-any.whl[tools]\"\`"
+          } >> notes.md
+          gh release create "v$VERSION" artifacts/dist/* "artifacts/streamhub-$VERSION-docker-image.tar.gz" \
+            --target "$GITHUB_SHA" --title "Streamhub $VERSION" --notes-file notes.md

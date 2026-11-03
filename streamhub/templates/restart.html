@@ -1,0 +1,16 @@
+{% extends "_page.html" %}
+{% block title %}Restarting{% end %}
+{% block panel_top %}<div class="sh-loader" aria-hidden="true"><span></span><span></span><span></span></div>{% end %}
+{% block heading %}Restarting {{ site_title }}{% end %}
+{% block body %}
+<p class="text-center">You will be taken back to the main page when {{ site_title }} is up again.</p>
+<script>
+(function poll(delay) {
+	setTimeout(function () {
+		fetch("/api/health", {cache: "no-store"})
+			.then(function (r) { if (r.ok) { window.location.href = "/"; } else { poll(1000); } })
+			.catch(function () { poll(1000); });
+	}, delay);
+})(3000);
+</script>
+{% end %}

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>{{ site_title }}{% if board_label %} · {{ board_label }}{% elif view == "news" %} · News{% end %}</title>
+	{% include "_head.html" %}
+</head>
+<body class="sh-body {% block layout_class %}sh-layout-top{% end %}">
+{% include "_nav.html" %}
+<main class="sh-main">
+{% if view == "news" %}
+	{% include "news.html" %}
+{% elif view == "home" %}
+	{% include "home.html" %}
+{% else %}
+	{% include "apps.html" %}
+{% end %}
+</main>
+{% include "_footer.html" %}
+{% include "_ux.html" %}
+</body>
+</html>

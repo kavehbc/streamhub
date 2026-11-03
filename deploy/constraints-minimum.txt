@@ -1,0 +1,7 @@
+# Lowest versions Streamhub supports, installed by the "minimum-versions" CI job:
+#   pip install -e ".[dev]" -c deploy/constraints-minimum.txt
+# Raise a bound here (and in pyproject.toml) when a fix or feature needs a newer release.
+tornado==6.3
+click==8.1.0
+psutil==5.9.0
+pyjwt==2.8.0

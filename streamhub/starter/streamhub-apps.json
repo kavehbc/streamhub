@@ -1,0 +1,22 @@
+[
+	{
+		"boards": [
+			{"name": "apps.brd", "label": "Apps", "auth": false}
+		]
+	},
+	{
+		"board": ["apps.brd"],
+		"app_id": "streamhub-docs.url",
+		"app_name": "Streamhub on GitHub",
+		"description": "Source code and documentation",
+		"url": "https://github.com/kavehbc/streamhub",
+		"icon": "/cdf/icons/help.png"
+	},
+	{
+		"board": ["apps.brd"],
+		"app_id": "help.cmd",
+		"app_name": "Help",
+		"description": "Streamhub user guide",
+		"icon": "/cdf/icons/help.png"
+	}
+]

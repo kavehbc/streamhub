@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 64" role="img" aria-label="Streamhub">
+  <title>Streamhub</title>
+  <defs>
+    <linearGradient id="sh-logo-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6366f1"/>
+      <stop offset="1" stop-color="#06b6d4"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#sh-logo-bg)"/>
+  <!-- many streams (apps) flow into one hub, which serves them on one port -->
+  <g fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round">
+    <g opacity=".78"><path d="M14 18 C24 18 24 32 32 32"/><circle cx="14" cy="18" r="1.8" stroke-width="3.4" fill="#fff"/></g>
+    <g opacity=".9"><path d="M14 32 H32"/><circle cx="14" cy="32" r="1.8" stroke-width="3.4" fill="#fff"/></g>
+    <g opacity=".78"><path d="M14 46 C24 46 24 32 32 32"/><circle cx="14" cy="46" r="1.8" stroke-width="3.4" fill="#fff"/></g>
+    <path d="M32 32 H44"/>
+    <circle cx="50" cy="32" r="4.6"/>
+  </g>
+  <circle cx="32" cy="32" r="6.5" fill="#fff"/>
+  <text x="80" y="43" font-family="Segoe UI, Inter, Helvetica, Arial, sans-serif" font-size="34" font-weight="700"
+        letter-spacing="-0.5" fill="#000">streamhub</text>
+</svg>

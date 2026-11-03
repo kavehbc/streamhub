@@ -1,0 +1,16 @@
+{
+	"server-url": "http://localhost",
+	"apps": "streamhub-apps.json",
+	"users": "streamhub-users.json",
+	"news": "streamhub-news.json",
+	"schedule": null,
+	"timezone": null,
+	"virtual-environment": "",
+	"port": 8500,
+	"port-exception": [8501],
+	"idle-timeout": 60,
+	"site-title": "Streamhub Demo",
+	"team-name": "",
+	"logo": "",
+	"footer": ""
+}

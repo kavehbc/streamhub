@@ -1,0 +1,21 @@
+{% extends "_page.html" %}
+{% block title %}Confirm{% end %}
+{% block panel_top %}<div class="sh-panel-icon is-warn" aria-hidden="true"><i class="fa fa-question"></i></div>{% end %}
+{% block heading %}{{ command }}?{% end %}
+{% block body %}
+<form action="{{ action }}" method="post">
+	{% module xsrf_form_html() %}
+	<p class="text-center">Are you sure that you want to <b>{{ command.lower() }}</b>?</p>
+	{% if options %}
+	<div class="sh-options">
+	{% for name, label, checked in options %}
+		<label class="sh-check"><input type="checkbox" id="{{ name }}" name="{{ name }}" value="1" {% if checked %}checked{% end %}> <span>{{ label }}</span></label>
+	{% end %}
+	</div>
+	{% end %}
+	<div class="sh-actions-center">
+		<button type="submit" class="btn sh-btn-primary">Yes, {{ command.lower() }}</button>
+		<a class="btn sh-btn-quiet" href="javascript:history.length > 1 ? history.back() : (location.href = '/')">Cancel</a>
+	</div>
+</form>
+{% end %}

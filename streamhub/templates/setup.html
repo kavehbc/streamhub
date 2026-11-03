@@ -1,0 +1,59 @@
+{% extends "_page.html" %}
+{% block title %}Set up{% end %}
+{% block panel_class %}sh-panel-auth{% end %}
+{% block heading %}Set up {{ site_title }}{% end %}
+{% block body %}
+<p class="sh-muted text-center">Welcome! Create the first admin account. You can add more users, apps and settings on
+	the Admin page afterwards.</p>
+{% if error %}<div class="alert alert-danger" role="alert"><i class="fa fa-exclamation-circle"></i> {{ error }}</div>{% end %}
+<form action="/setup/" method="post" class="sh-form">
+	{% module xsrf_form_html() %}
+	{% if token %}
+	<input type="hidden" name="token" value="{{ token }}" />
+	{% else %}
+	<div class="sh-field">
+		<label class="sh-field-label" for="setup-token">Setup token</label>
+		<input type="text" id="setup-token" name="token" class="form-control sh-mono" value="{{ given }}" autocomplete="off"
+			spellcheck="false" required autofocus placeholder="Paste the token (or the whole setup link)" />
+		<small class="sh-field-help">So that only you can create the admin, the hub printed a private token when it
+			started{% if container %}. On the machine that runs Docker, show it with:{% else %}, in the console or log
+			where you started <code>streamhub run</code>: look for <code>Setup token:</code>.{% end %}</small>
+		{% if container %}
+		<pre class="sh-setup-command">docker logs {{ container }}</pre>
+		<small class="sh-field-help">With Compose: <code>docker compose logs streamhub</code>. Look for <code>Setup token:</code>.</small>
+		{% end %}
+	</div>
+	{% end %}
+	<label class="sh-field">
+		<span>Admin user name</span>
+		<input type="text" name="username" class="form-control" value="{{ username }}" autocomplete="username"
+			pattern="[A-Za-z0-9._@\-]{1,64}" required{% if token %} autofocus{% end %} />
+		<small class="sh-field-help">Letters, digits and . _ @ -</small>
+	</label>
+	<label class="sh-field">
+		<span>Password</span>
+		<input type="password" name="password" class="form-control" autocomplete="new-password" minlength="{{ min_password }}" required />
+		<small class="sh-field-help">{{ min_password }} characters or more. It is stored as a hash.</small>
+	</label>
+	<label class="sh-field">
+		<span>Repeat the password</span>
+		<input type="password" name="confirm" class="form-control" autocomplete="new-password" minlength="{{ min_password }}" required />
+	</label>
+	<label class="sh-field">
+		<span>Site title</span>
+		<input type="text" name="site_title" class="form-control" value="{{ site }}" placeholder="Streamhub" />
+		<small class="sh-field-help">Heads the landing page and names the browser tab.</small>
+	</label>
+	<label class="sh-field">
+		<span>Team name <small class="sh-muted">(optional)</small></span>
+		<input type="text" name="team_name" class="form-control" value="{{ team }}" />
+		<small class="sh-field-help">Shown under the top menu.</small>
+	</label>
+	<button type="submit" class="btn btn-block sh-btn-primary sh-btn-lg">Create the admin and sign in</button>
+</form>
+{% if not token %}
+<p class="sh-muted small mt-3">Other ways: <code>streamhub init &lt;config folder&gt;</code> creates the admin from the
+	command line, or set <code>STREAMHUB_ADMIN_PASSWORD</code> (Docker: <code>-e STREAMHUB_ADMIN_PASSWORD=…</code>) and
+	restart the hub.</p>
+{% end %}
+{% end %}

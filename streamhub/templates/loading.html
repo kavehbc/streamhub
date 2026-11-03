@@ -1,0 +1,26 @@
+{% extends "_page.html" %}
+{% block title %}Starting {{ app.name }}{% end %}
+{% block head %}<noscript><meta http-equiv="refresh" content="3"></noscript>{% end %}
+{% block panel_top %}
+<div class="sh-loader" aria-hidden="true"><span></span><span></span><span></span></div>
+{% end %}
+{% block heading %}Starting {{ app.name }}{% end %}
+{% block body %}
+<p class="text-center">The app is starting{% if port %} on internal port {{ port }}{% end %}. This page opens it as soon as it answers.</p>
+<p class="text-center sh-muted small" id="sh-loading-state">Waiting for the app…</p>
+<div class="sh-actions-center">
+	<a class="btn btn-sm sh-btn-quiet" href="/out/{{ app.app_id }}/" target="_blank"><i class="fa fa-terminal"></i> App output</a>
+</div>
+<script>
+(function poll(started) {
+	fetch("/api/apps/{{ url_escape(app.app_id) }}/status", {cache: "no-store", credentials: "same-origin"})
+		.then(function (r) { return r.json(); })
+		.then(function (s) {
+			if (s.ready || s.state !== "starting") { window.location.reload(); return; }
+			document.getElementById("sh-loading-state").textContent = "Waiting for the app… " + Math.round((Date.now() - started) / 1000) + " s";
+			setTimeout(function () { poll(started); }, 500);
+		})
+		.catch(function () { setTimeout(function () { poll(started); }, 1000); });
+})(Date.now());
+</script>
+{% end %}

@@ -1,0 +1,20 @@
+{# Top navigation of every page: brand, home, news, boards, theme and the account menu. #}
+<header class="sh-nav" id="sh-nav">
+	<div class="sh-nav-inner">
+		{% include "_brand.html" %}
+		<button type="button" class="sh-nav-toggle" id="sh-nav-toggle" aria-label="Menu" aria-expanded="false" aria-controls="sh-nav-menu"><i class="fa fa-bars"></i></button>
+		<nav class="sh-nav-menu" id="sh-nav-menu" aria-label="Main">
+			<a href="/" class="sh-nav-link{% if nav_active == 'home' %} active{% end %}"><i class="fa fa-home"></i> Home</a>
+			{% if nav_has_news %}<a href="/news/" class="sh-nav-link{% if nav_active == 'news' %} active{% end %}"><i class="fa fa-newspaper-o"></i> News</a>{% end %}
+			{% if nav_boards %}<span class="sh-nav-sep" aria-hidden="true"></span>{% end %}
+			{% for nav_board, nav_open in nav_boards %}
+			<a href="/{{ nav_board.name }}/" class="sh-nav-link{% if nav_active == nav_board.name %} active{% end %}{% if not nav_open %} locked{% end %}"
+				{% if not nav_open %}title="Sign in to open this board"{% end %}>{% if not nav_open %}<i class="fa fa-lock"></i> {% end %}{{ nav_board.label }}</a>
+			{% end %}
+			<span class="sh-nav-spacer"></span>
+			<button type="button" class="sh-icon-btn hub-theme" id="hub-theme" title="Switch light / dark" aria-label="Switch light or dark theme"><i class="fa fa-adjust"></i></button>
+			{% include "_user.html" %}
+		</nav>
+	</div>
+	{% if team_name %}<div class="sh-nav-team">{{ team_name }}</div>{% end %}
+</header>

@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "streamhub"
+dynamic = ["version"]  # from streamhub/__init__.py, the only place to change it
+description = "Web-based platform to launch and serve multiple Streamlit/Python apps behind one port"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Kaveh Bakhtiyari" }]
+requires-python = ">=3.11"
+dependencies = [
+    "tornado>=6.3",
+    "click>=8.1",
+    "psutil>=5.9",
+    "tzdata; platform_system == 'Windows'",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: Microsoft :: Windows",
+]
+
+[project.optional-dependencies]
+# Built-in help.cmd page (runs with the hub's own interpreter).
+tools = ["streamlit>=1.37"]
+# LDAP login.
+ldap = ["ldap3>=2.9"]
+# OpenID Connect login: ID-token signature checks.
+oidc = ["pyjwt[crypto]>=2.8"]
+# Building: wheel and sdist (`make dist`), single-file executable (`make exe`).
+build = ["build>=1.2", "pyinstaller>=6.10"]
+# Dependencies of the apps in examples/.
+examples = ["streamlit>=1.37", "flask>=2.2", "fastapi", "uvicorn"]
+dev = ["pytest>=7", "requests", "pyjwt[crypto]>=2.8"]
+
+[project.urls]
+Homepage = "https://github.com/kavehbc/streamhub"
+
+[project.scripts]
+streamhub = "streamhub.cli:main"
+streamhub-passwd = "streamhub.cli:passwd"
+
+[tool.setuptools.dynamic]
+version = { attr = "streamhub.__version__" }
+
+[tool.setuptools.packages.find]
+include = ["streamhub*"]
+
+[tool.setuptools.package-data]
+streamhub = ["templates/*.html", "cdf/**/*", "static/**/*", "starter/*.json", "demo/config/*.json",
+             "demo/*/*.py", "demo/*/run.bash"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

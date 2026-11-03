@@ -1,0 +1,65 @@
+{% set open_boards = [(b, n) for b, n, ok in board_cards if ok] %}
+{% set landing = [a for a, _ in apps if a.display != "hidden"] %}
+<section class="sh-hero">
+	<div class="sh-hero-text">
+		<p class="sh-eyebrow">{% if current_user %}Welcome back, {{ current_user }}{% else %}Welcome{% end %}</p>
+		<h1>{{ site_title }}</h1>
+		<p class="sh-lead">
+			{% if team_name %}Apps and dashboards maintained by {{ team_name }}. If something doesn't work, contact {{ team_name }} or use “Report an issue” on the app.
+			{% else %}Your apps and dashboards in one place. Pick a board, open an app, and it starts on demand.{% end %}
+		</p>
+		<div class="sh-hero-actions">
+			{% for b, n in open_boards[:3] %}<a class="btn sh-btn-light" href="/{{ b.name }}/">{{ b.label }} <i class="fa fa-arrow-right"></i></a>{% end %}
+			{% if not current_user %}<a class="btn sh-btn-ghost" href="/login/"><i class="fa fa-sign-in"></i> Log in for more</a>{% end %}
+		</div>
+	</div>
+	<div class="sh-hero-stats">
+		<div><b>{{ len(open_boards) }}</b><span>board{% if len(open_boards) != 1 %}s{% end %}</span></div>
+		<div><b>{{ sum(n for _, n in open_boards) + len(landing) }}</b><span>apps</span></div>
+		<div><b id="hub-running-count">–</b><span>running</span></div>
+	</div>
+</section>
+
+<section class="sh-section" style="display: none;">
+	<h2 class="sh-section-title"><i class="fa fa-star"></i> Your favorites</h2>
+	<div class="hub-favorites" id="hub-favorites"></div>
+</section>
+
+{% if landing %}
+<section class="sh-section">
+	<h2 class="sh-section-title"><i class="fa fa-th-large"></i> Apps</h2>
+	{% include "_app_grid.html" %}
+</section>
+{% end %}
+
+<div class="sh-home-grid">
+	{% if board_cards %}
+	<section class="sh-section">
+		<h2 class="sh-section-title"><i class="fa fa-columns"></i> Boards</h2>
+		<div class="sh-board-grid">
+			{% for b, n, ok in board_cards %}
+			<a class="sh-board{% if not ok %} locked{% end %}" href="/{{ b.name }}/">
+				<span class="sh-board-icon" aria-hidden="true">{{ b.label[:1].upper() }}</span>
+				<span class="sh-board-text">
+					<b>{{ b.label }}</b>
+					<small>{% if ok %}{{ n }} app{% if n != 1 %}s{% end %}{% else %}<i class="fa fa-lock"></i> Sign in to open{% end %}</small>
+				</span>
+				<i class="fa fa-chevron-right sh-board-go" aria-hidden="true"></i>
+			</a>
+			{% end %}
+		</div>
+	</section>
+	{% end %}
+
+	<section class="sh-section">
+		<h2 class="sh-section-title"><i class="fa fa-newspaper-o"></i> Latest news
+			{% if len(news) > 3 %}<a class="sh-section-link" href="/news/">All news <i class="fa fa-arrow-right"></i></a>{% end %}</h2>
+		{% if news %}
+		<div class="sh-news-list">
+			{% for news_item in news[:3] %}{% include "_news_item.html" %}{% end %}
+		</div>
+		{% else %}
+		<div class="sh-empty" style="display: block;"><i class="fa fa-newspaper-o"></i> No announcements.</div>
+		{% end %}
+	</section>
+</div>

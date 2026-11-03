@@ -1,0 +1,6 @@
+name: streamhub
+dependencies:
+  - python=3.12
+  - pip
+  - pip:
+      - -e .[tools,examples,dev]

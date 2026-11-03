@@ -1,0 +1,44 @@
+{# Account menu: the avatar opens a dropdown with the admin panel sections, the hub actions the user's role allows, and log out. #}
+{% if current_user %}
+<div class="sh-user" id="sh-user">
+	<button type="button" class="sh-user-btn{% if nav_active == 'admin' %} active{% end %}" id="sh-user-btn"
+		aria-haspopup="true" aria-expanded="false" aria-controls="sh-user-menu" title="Account and administration">
+		<span class="sh-avatar" aria-hidden="true">{{ current_user[:1].upper() }}</span>
+		<span class="sh-user-name">{{ current_user }}<small>{{ user.role }}</small></span>
+		<i class="fa fa-angle-down sh-user-caret" aria-hidden="true"></i>
+	</button>
+	<div class="sh-user-menu" id="sh-user-menu" role="menu" aria-labelledby="sh-user-btn" hidden>
+		{% if is_manager %}
+		<p class="sh-menu-label">Admin panel</p>
+		<a role="menuitem" class="sh-menu-item" href="/admin/#dashboard"><i class="fa fa-tachometer"></i> Dashboard</a>
+		<a role="menuitem" class="sh-menu-item" href="/admin/#network"><i class="fa fa-plug"></i> Network</a>
+		<div class="sh-menu-sep" role="separator"></div>
+		{% end %}
+		{% if is_admin %}
+		<p class="sh-menu-label">Configuration</p>
+		<a role="menuitem" class="sh-menu-item" href="/admin/#apps"><i class="fa fa-cubes"></i> Apps and boards</a>
+		<a role="menuitem" class="sh-menu-item" href="/admin/#users"><i class="fa fa-user"></i> Users</a>
+		<a role="menuitem" class="sh-menu-item" href="/admin/#news"><i class="fa fa-newspaper-o"></i> News</a>
+		<a role="menuitem" class="sh-menu-item" href="/admin/#settings"><i class="fa fa-cog"></i> Settings</a>
+		<a role="menuitem" class="sh-menu-item" href="/admin/#docker"><i class="fa fa-ship"></i> Docker</a>
+		<a role="menuitem" class="sh-menu-item" href="/admin/#static"><i class="fa fa-folder-open-o"></i> Static files</a>
+		<a role="menuitem" class="sh-menu-item" href="/admin/#sessions"><i class="fa fa-users"></i> Sessions</a>
+		<a role="menuitem" class="sh-menu-item" href="/admin/#files"><i class="fa fa-file-code-o"></i> JSON files</a>
+		<div class="sh-menu-sep" role="separator"></div>
+		{% end %}
+		<a role="menuitem" class="sh-menu-item" href="/clear/"><i class="fa fa-eraser"></i> Clear memory</a>
+		{% if is_admin %}
+		<a role="menuitem" class="sh-menu-item" href="/update/"><i class="fa fa-refresh"></i> Reload configuration</a>
+		<a role="menuitem" class="sh-menu-item" href="/restart/"><i class="fa fa-repeat"></i> Restart hub</a>
+		<a role="menuitem" class="sh-menu-item is-bad" href="/exit/"><i class="fa fa-power-off"></i> Stop hub</a>
+		{% end %}
+		<div class="sh-menu-sep" role="separator"></div>
+		<form action="/logout/" method="post" class="logout-form">
+			{% module xsrf_form_html() %}
+			<button type="submit" role="menuitem" class="sh-menu-item"><i class="fa fa-sign-out"></i> Log out</button>
+		</form>
+	</div>
+</div>
+{% else %}
+<a href="/login/" class="btn btn-sm sh-btn-primary sh-login-btn"><i class="fa fa-sign-in"></i> Log in</a>
+{% end %}

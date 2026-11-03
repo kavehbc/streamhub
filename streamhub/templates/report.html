@@ -1,0 +1,45 @@
+{% extends "_page.html" %}
+{% block title %}Report an issue{% end %}
+{% block panel_class %}sh-panel-wide{% end %}
+{% block panel_top %}<div class="sh-panel-icon" aria-hidden="true"><i class="fa fa-flag-o"></i></div>{% end %}
+{% block heading %}Report an issue{% end %}
+{% block body %}
+{% set sent = outcome in ("sent", "partial", "disabled") %}
+{% if outcome == "sent" %}
+<div class="alert alert-success"><i class="fa fa-check-circle"></i> Thank you. Your report about <b>{{ app.name }}</b> was sent.</div>
+{% elif outcome == "partial" %}
+<div class="alert alert-warning"><i class="fa fa-exclamation-circle"></i> Thank you. Your report about <b>{{ app.name }}</b> was sent, but not to every destination. The administrators can see which in the hub log.</div>
+{% elif outcome == "disabled" %}
+<div class="alert alert-info"><i class="fa fa-info-circle"></i> Notifications are turned off on this hub (debug mode): your report about <b>{{ app.name }}</b> was only written to the hub log.</div>
+{% end %}
+{% if not sent %}
+{% if outcome == "failed" %}<div class="alert alert-danger"><i class="fa fa-times-circle"></i> Your report could not be delivered. Try again later{% if app.developers %}, or write to the developers directly{% end %}.</div>{% end %}
+{% if outcome == "none" %}<div class="alert alert-warning"><i class="fa fa-exclamation-circle"></i> This hub has nowhere to send reports{% if app.developers %}; write to the developers directly{% end %}.</div>{% end %}
+<div class="sh-report-app">
+	<img src="{{ app.icon or '/cdf/streamhub/blank_transparent_icon.png' }}" alt="">
+	<div><b>{{ app.name }}</b><span class="sh-muted"> · {{ app.app_id }}{% if app.display == "disabled" %} · currently disabled{% end %}</span></div>
+</div>
+{% set emails = [email for _, email in app.developers if email] %}
+{% if app.developers %}
+<div class="sh-devs">
+	<span class="sh-muted small">Developers: write to them directly, or use the form.</span>
+	{% for name, email in app.developers %}
+	<a class="sh-dev" href="mailto:{{ email }}?cc={{ url_escape(','.join(e for e in emails if e != email)) }}&amp;subject={{ url_escape(app.app_id) }}"><i class="fa fa-envelope-o"></i> {{ name or email }}<small>{{ email }}</small></a>
+	{% end %}
+</div>
+{% end %}
+{% if error %}<div class="alert alert-danger">{{ error }}</div>{% end %}
+<form action="/report/?id={{ url_escape(app.app_id) }}" method="post" class="sh-form">
+	{% module xsrf_form_html() %}
+	<label class="sh-field"><span>What happened?</span>
+		<textarea name="message" class="form-control" rows="6" maxlength="5000" placeholder="What happened? What did you expect?" required>{{ message }}</textarea></label>
+	<label class="sh-field"><span>Your email <small class="sh-muted">(optional, for a reply)</small></span>
+		<input type="email" name="contact" class="form-control" maxlength="200" value="{{ contact }}" placeholder="you@example.com" /></label>
+	<div class="sh-actions-center">
+		<button type="submit" class="btn sh-btn-primary"><i class="fa fa-paper-plane"></i> Send report</button>
+		<a class="btn sh-btn-quiet" href="javascript:history.back()">Cancel</a>
+	</div>
+</form>
+{% end %}
+{% if sent %}<div class="sh-actions-center"><a class="btn sh-btn-primary" href="/">Back to {{ site_title }}</a></div>{% end %}
+{% end %}

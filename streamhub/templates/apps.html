@@ -1,0 +1,27 @@
+{% set visible_apps = [a for a, _ in apps if a.display != "hidden"] %}
+<section class="sh-section">
+	<div class="sh-page-head">
+		<div>
+			<p class="sh-eyebrow">Board</p>
+			<h1 class="sh-page-title">{{ board_label or board }}</h1>
+			<p class="sh-page-sub">{{ len(visible_apps) }} app{% if len(visible_apps) != 1 %}s{% end %} · apps start when you open them and stop when idle</p>
+		</div>
+	</div>
+	<div class="hub-toolbar sh-toolbar">
+		<div class="sh-search">
+			<i class="fa fa-search" aria-hidden="true"></i>
+			<input type="search" id="hub-search" class="form-control" placeholder="Search apps" aria-label="Search apps" autocomplete="off" />
+		</div>
+		<div class="sh-filters" role="group" aria-label="Filter apps">
+			<button type="button" class="sh-filter active" data-filter="all">All</button>
+			<button type="button" class="sh-filter" data-filter="running"><i class="hub-badge state-running"></i> Running</button>
+			<button type="button" class="sh-filter" data-filter="favorites"><i class="fa fa-star"></i> Favorites</button>
+		</div>
+	</div>
+	<div class="hub-empty sh-empty" id="hub-empty"><i class="fa fa-search"></i> No app matches.</div>
+	{% if visible_apps %}
+	{% include "_app_grid.html" %}
+	{% else %}
+	<div class="sh-empty" style="display: block;"><i class="fa fa-inbox"></i> This board has no apps yet.</div>
+	{% end %}
+</section>

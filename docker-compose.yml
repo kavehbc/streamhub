@@ -1,0 +1,36 @@
+services:
+  streamhub:
+    build: .
+    image: kavehbc/streamhub:2.3.0
+    ports:
+      - "8500:8500"
+    environment:
+      # Optional admin. Without it, the first start prints a setup link (docker compose logs).
+      STREAMHUB_ADMIN_PASSWORD: ${STREAMHUB_ADMIN_PASSWORD:-}
+      STREAMHUB_SLACK_HOOK: ${STREAMHUB_SLACK_HOOK:-}
+      STREAMHUB_COOKIE_SECRET: ${STREAMHUB_COOKIE_SECRET:-}
+      # Docker apps ("runtime": "docker") join this network; the hub reaches them by container name.
+      STREAMHUB_DOCKER_NETWORK: streamhub-apps
+    # ./config is mounted at /config, the hub's config folder: an empty one gets the starter setup. The container
+    # user (uid 1000) writes the admin page's saves, logs/, temp/ and .streamhub-secret there.
+    # The bundled demo instead: docker compose run --rm -p 8500:8500 streamhub streamhub demo
+    volumes:
+      - ./config:/config
+      # The host's Docker daemon, for docker apps and the admin page's Docker tab. Whoever controls it controls
+      # the host: only hub admins reach it (SEC-21). Remove this line, and group_add, to run without Docker.
+      - /var/run/docker.sock:/var/run/docker.sock
+    # The group that owns the socket, so uid 1000 may use it: 0 on Docker Desktop; on Linux usually the docker
+    # group, set DOCKER_GID in .env (getent group docker | cut -d: -f3).
+    group_add:
+      - "${DOCKER_GID:-0}"
+    networks:
+      - apps
+    command: ["streamhub", "run", "${STREAMHUB_CONFIG:-/config}"]
+    # /restart/ exits with code 3 and Docker starts the hub again; /exit/ exits with 0 and stays down.
+    restart: on-failure
+    stop_grace_period: 30s
+    init: true  # tini as PID 1 forwards signals and reaps orphaned grandchildren
+
+networks:
+  apps:
+    name: streamhub-apps

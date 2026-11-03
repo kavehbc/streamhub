@@ -1,0 +1,17 @@
+{% extends "_page.html" %}
+{% block title %}{{ app.name }} · Error{% end %}
+{% block panel_class %}sh-panel-wide{% end %}
+{% block panel_top %}<div class="sh-panel-icon is-bad" aria-hidden="true"><i class="fa fa-exclamation-triangle"></i></div>{% end %}
+{% block heading %}{{ app.name }} could not run{% end %}
+{% block body %}
+<p class="text-center">{{ message }}</p>
+{% if port %}<p class="text-center sh-muted small">Internal port {{ port }}</p>{% end %}
+<div class="sh-actions-center">
+	<a class="btn sh-btn-primary" href="{{ app.href }}"><i class="fa fa-refresh"></i> Try again</a>
+	<a class="btn sh-btn-quiet" href="/report/?id={{ url_escape(app.app_id) }}"><i class="fa fa-flag-o"></i> Report an issue</a>
+</div>
+{% if log_tail %}
+<h2 class="sh-subtitle">End of the app log</h2>
+<pre class="log-output">{{ log_tail }}</pre>
+{% end %}
+{% end %}

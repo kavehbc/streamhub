@@ -1,0 +1,48 @@
+{# App cards of a board (`apps`: [(app, [children])]). Search, favorites and live status come from _ux.html. #}
+{% set kinds = {"sl": "Streamlit", "py": "Python", "url": "Link", "curl": "External", "cmd": "Built-in", "internal": "Hub page"} %}
+<div class="sh-app-grid" id="hub-apps">
+{% for app, children in apps %}
+	{% if app.display != "hidden" %}
+	{% set off = app.display == "disabled" %}
+	{% set new_tab = app.kind != "internal" %}
+	<article class="sh-app{% if off %} is-disabled{% end %}" data-app-id="{{ app.app_id }}"
+		data-search="{{ ' '.join([app.name, app.app_id, app.description] + [c.name + ' ' + c.app_id for c in children]).lower() }}">
+		<div class="sh-app-head">
+			<img class="sh-app-icon" src="{{ app.icon or '/cdf/streamhub/blank_transparent_icon.png' }}" alt="" loading="lazy">
+			<div class="sh-app-heading">
+				<h3 class="sh-app-name">{% if off %}{{ app.name }}{% else %}<a href="{{ app.href }}"{% if new_tab %} target="_slaunch_{{ app.app_id }}"{% end %}>{{ app.name }}</a>{% end %}</h3>
+				<div class="sh-app-meta">
+					<span class="sh-chip">{{ app.runtime.capitalize() if app.runtime != "process" else kinds.get(app.kind, app.kind) }}</span>
+					{% if off %}<span class="sh-chip sh-chip-muted">Disabled</span>{% end %}
+					<span class="sh-state"><i class="hub-badge" data-badge="{{ app.app_id }}"></i><span data-badge-label="{{ app.app_id }}"></span></span>
+				</div>
+			</div>
+			<button type="button" class="hub-star" data-fav="{{ app.app_id }}" title="Favorite" aria-label="Favorite {{ app.name }}"><i class="fa fa-star"></i></button>
+		</div>
+		{% if app.description %}<p class="sh-app-desc">{{ app.description }}</p>{% end %}
+		{% set shown = [c for c in children if c.display != "hidden"] %}
+		{% if shown %}
+		<ul class="sh-children">
+			{% for child in shown %}
+			{% set child_off = child.display == "disabled" %}
+			<li class="child-item{% if child_off %} is-disabled{% end %}" data-app-id="{{ child.app_id }}" data-search="{{ ' '.join([child.name, child.app_id, child.description]).lower() }}">
+				<img src="{{ child.icon or '/cdf/streamhub/blank_transparent_icon.png' }}" alt="" loading="lazy">
+				<div class="sh-child-text">
+					{% if child_off %}<span class="sh-child-name">{{ child.name }}</span>{% else %}<a class="sh-child-name" href="{{ child.href }}"{% if child.kind != "internal" %} target="_slaunch_{{ child.app_id }}"{% end %}>{{ child.name }}</a>{% end %}
+					{% if child.description %}<span class="sh-child-desc">{{ child.description }}</span>{% end %}
+				</div>
+				<i class="hub-badge" data-badge="{{ child.app_id }}"></i>
+				{% if not child_off and child.kind != "internal" %}<a href="/report/?id={{ url_escape(child.app_id) }}" class="sh-icon-link" title="Report an issue" aria-label="Report an issue with {{ child.name }}"><i class="fa fa-flag-o"></i></a>{% end %}
+				<button type="button" class="hub-star" data-fav="{{ child.app_id }}" title="Favorite" aria-label="Favorite {{ child.name }}"><i class="fa fa-star"></i></button>
+			</li>
+			{% end %}
+		</ul>
+		{% end %}
+		<div class="sh-app-foot">
+			{% if not off %}<a class="btn btn-sm sh-btn-primary" href="{{ app.href }}"{% if new_tab %} target="_slaunch_{{ app.app_id }}"{% end %}>Open <i class="fa fa-arrow-right"></i></a>{% end %}
+			{% if not off and app.kind != "internal" %}<a class="sh-link-muted" href="/report/?id={{ url_escape(app.app_id) }}"><i class="fa fa-flag-o"></i> Report an issue</a>{% end %}
+		</div>
+	</article>
+	{% end %}
+{% end %}
+</div>

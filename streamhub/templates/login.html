@@ -1,0 +1,36 @@
+{% extends "_page.html" %}
+{% block title %}Log in{% end %}
+{% block panel_class %}sh-panel-auth{% end %}
+{% block panel_top %}
+<div class="sh-auth-mark" aria-hidden="true">
+	<span class="sh-mark sh-mark-lg"><svg viewBox="0 0 64 64"><g fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"><g opacity=".78"><path d="M14 18 C24 18 24 32 32 32"/><circle cx="14" cy="18" r="2" fill="#fff"/></g><g opacity=".9"><path d="M14 32 H32"/><circle cx="14" cy="32" r="2" fill="#fff"/></g><g opacity=".78"><path d="M14 46 C24 46 24 32 32 32"/><circle cx="14" cy="46" r="2" fill="#fff"/></g><path d="M32 32 H44"/><circle cx="50" cy="32" r="4.6"/></g><circle cx="32" cy="32" r="7" fill="#fff"/></svg></span>
+</div>
+{% end %}
+{% block heading %}Sign in to {{ site_title }}{% end %}
+{% block body %}
+<p class="sh-muted text-center">Sign in to open restricted boards and apps.</p>
+{% if login_status == 2 %}<div class="alert alert-danger" role="alert"><i class="fa fa-exclamation-circle"></i> Authentication failed, try again.</div>{% end %}
+{% if login_status == 3 %}<div class="alert alert-danger" role="alert"><i class="fa fa-ban"></i> You are not authorized to access this page.</div>{% end %}
+{% if needs_setup %}<div class="alert alert-info" role="alert"><i class="fa fa-key"></i> This hub has no admin account yet. Open the setup link printed in the hub's console (in Docker: <code>docker logs &lt;container&gt;</code>).</div>{% end %}
+{% if login_status == 4 %}<div class="alert alert-warning" role="alert"><i class="fa fa-plug"></i> Single sign-on is unavailable right now; try again later.</div>{% end %}
+{% if oidc_label %}
+<a class="btn btn-block sh-btn-sso" href="/login/oidc/?next={{ url_escape(target) }}"><i class="fa fa-shield"></i> {{ oidc_label }}</a>
+<div class="sh-divider"><span>or with a password</span></div>
+{% end %}
+<form action="/login/" method="post" class="sh-form">
+	{% module xsrf_form_html() %}
+	<input type="hidden" name="next" value="{{ target }}" />
+	<label class="sh-field">
+		<span>Username</span>
+		<span class="sh-input-icon"><i class="fa fa-user-o" aria-hidden="true"></i>
+			<input type="text" name="username" class="form-control" autocomplete="username" required{% if not oidc_label %} autofocus{% end %} /></span>
+	</label>
+	<label class="sh-field">
+		<span>Password</span>
+		<span class="sh-input-icon"><i class="fa fa-lock" aria-hidden="true"></i>
+			<input type="password" name="password" class="form-control" autocomplete="current-password" required /></span>
+	</label>
+	<button type="submit" class="btn btn-block sh-btn-primary sh-btn-lg">Log in</button>
+	<a class="btn btn-block sh-btn-quiet" href="/">Back to {{ site_title }}</a>
+</form>
+{% end %}

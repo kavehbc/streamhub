@@ -1,0 +1,8 @@
+# Build requirements of the documentation site: pip install -r readthedocs/requirements.txt
+sphinx>=8,<10
+myst-parser>=4
+furo>=2024.8.6
+sphinx-copybutton>=0.5.2
+sphinx-design>=0.6
+sphinx-click>=6
+sphinxcontrib-mermaid>=1

@@ -1,0 +1,2 @@
+# Streamhub is a package: install it (with the built-in dashboards) from the repository root.
+-e .[tools]

@@ -1,0 +1,205 @@
+<script>
+(function () {
+	"use strict";
+	var FAVORITES = "streamhub-favorites", THEME = "streamhub-theme", root = document.documentElement;
+
+	function load(key, fallback) {
+		try { var value = JSON.parse(localStorage.getItem(key)); return value === null ? fallback : value; } catch (e) { return fallback; }
+	}
+	function store(key, value) {
+		try { localStorage.setItem(key, typeof value === "string" ? value : JSON.stringify(value)); } catch (e) {}
+	}
+	function each(selector, fn) { Array.prototype.forEach.call(document.querySelectorAll(selector), fn); }
+	function byId(id) { return document.getElementById(id); }
+
+	// -- theme --
+	function theme() {
+		return root.getAttribute("data-theme") ||
+			(window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+	}
+	each(".hub-theme", function (button) {
+		button.addEventListener("click", function () {
+			var next = theme() === "dark" ? "light" : "dark";
+			root.setAttribute("data-theme", next);
+			store(THEME, next);
+		});
+	});
+
+	// -- menu on small screens --
+	var nav = byId("sh-nav"), toggle = byId("sh-nav-toggle");
+	if (nav && toggle) {
+		toggle.addEventListener("click", function () {
+			var open = nav.classList.toggle("open");
+			toggle.setAttribute("aria-expanded", open ? "true" : "false");
+		});
+	}
+
+	// -- account menu: opens from the avatar; closes on a click outside, on Escape, or when an item is picked --
+	var userButton = byId("sh-user-btn"), userMenu = byId("sh-user-menu");
+	if (userButton && userMenu) {
+		var items = function () { return Array.prototype.slice.call(userMenu.querySelectorAll(".sh-menu-item")); };
+		var setMenu = function (open, focus) {
+			userMenu.hidden = !open;
+			userButton.setAttribute("aria-expanded", open ? "true" : "false");
+			if (open && focus) { items()[0].focus(); }
+		};
+		userButton.addEventListener("click", function () { setMenu(userMenu.hidden, false); });
+		userButton.addEventListener("keydown", function (event) {
+			if (event.key === "ArrowDown") { event.preventDefault(); setMenu(true, true); }
+		});
+		userMenu.addEventListener("click", function (event) { if (event.target.closest("a")) { setMenu(false); } });
+		userMenu.addEventListener("keydown", function (event) {
+			var list = items(), at = list.indexOf(document.activeElement);
+			if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+				event.preventDefault();
+				list[(at + (event.key === "ArrowDown" ? 1 : list.length - 1)) % list.length].focus();
+			}
+		});
+		document.addEventListener("click", function (event) {
+			if (!userMenu.hidden && !userButton.contains(event.target) && !userMenu.contains(event.target)) { setMenu(false); }
+		});
+		document.addEventListener("keydown", function (event) {
+			if (event.key === "Escape" && !userMenu.hidden) { setMenu(false); userButton.focus(); }
+		});
+	}
+
+	// -- favorites: starred cards first on boards; a "Your favorites" row on the home page --
+	var favorites = load(FAVORITES, []);
+	if (!Array.isArray(favorites)) { favorites = []; }
+	function isFavorite(id) { return favorites.indexOf(id) !== -1; }
+	function paintStars() {
+		each("[data-fav]", function (star) {
+			var on = isFavorite(star.getAttribute("data-fav"));
+			star.classList.toggle("on", on);
+			star.setAttribute("aria-pressed", on ? "true" : "false");
+		});
+	}
+	function sortCards() {
+		var wrapper = byId("hub-apps");
+		if (!wrapper) { return; }
+		var cards = Array.prototype.slice.call(wrapper.children);
+		cards.forEach(function (card, index) { if (!card.hasAttribute("data-order")) { card.setAttribute("data-order", index); } });
+		cards.sort(function (a, b) {
+			var fa = isFavorite(a.getAttribute("data-app-id")) ? 0 : 1, fb = isFavorite(b.getAttribute("data-app-id")) ? 0 : 1;
+			return fa - fb || a.getAttribute("data-order") - b.getAttribute("data-order");
+		});
+		cards.forEach(function (card) { wrapper.appendChild(card); });
+	}
+	each("[data-fav]", function (star) {
+		star.addEventListener("click", function (event) {
+			event.preventDefault();
+			var id = star.getAttribute("data-fav");
+			favorites = isFavorite(id) ? favorites.filter(function (f) { return f !== id; }) : favorites.concat([id]);
+			store(FAVORITES, favorites);
+			paintStars();
+			sortCards();
+			applyFilter();
+			if (lastApps) { renderFavorites(lastApps); }
+		});
+	});
+	paintStars();
+	sortCards();
+
+	// -- search and filters (board pages) --
+	var states = {}, search = byId("hub-search"), filter = "all";
+	function running(id) { var s = states[id]; return s === "running" || s === "starting"; }
+	function applyFilter() {
+		var wrapper = byId("hub-apps");
+		if (!wrapper) { return; }
+		var query = search ? search.value.trim().toLowerCase() : "", shown = 0;
+		Array.prototype.forEach.call(wrapper.children, function (card) {
+			var id = card.getAttribute("data-app-id"), own = card.getAttribute("data-search").indexOf(query) !== -1, anyChild = false;
+			Array.prototype.forEach.call(card.querySelectorAll(".child-item"), function (child) {
+				var hit = child.getAttribute("data-search").indexOf(query) !== -1;
+				anyChild = anyChild || hit;
+				child.style.display = own || hit || !query ? "" : "none";
+			});
+			var children = Array.prototype.map.call(card.querySelectorAll(".child-item"), function (c) { return c.getAttribute("data-app-id"); });
+			var family = [id].concat(children);
+			var kept = filter === "all" ||
+				(filter === "running" && family.some(running)) ||
+				(filter === "favorites" && family.some(isFavorite));
+			var visible = (!query || own || anyChild) && kept;
+			card.style.display = visible ? "" : "none";
+			if (visible) { shown++; }
+		});
+		var empty = byId("hub-empty");
+		if (empty) { empty.style.display = shown ? "none" : "block"; }
+	}
+	if (search) { search.addEventListener("input", applyFilter); }
+	each("[data-filter]", function (button) {
+		button.addEventListener("click", function () {
+			filter = button.getAttribute("data-filter");
+			each("[data-filter]", function (b) { b.classList.toggle("active", b === button); });
+			applyFilter();
+		});
+	});
+
+	// -- news page filter --
+	each("[data-news-filter]", function (button) {
+		button.addEventListener("click", function () {
+			var kind = button.getAttribute("data-news-filter");
+			each("[data-news-filter]", function (b) { b.classList.toggle("active", b === button); });
+			each("#sh-news .sh-news", function (item) {
+				item.style.display = kind === "all" || item.classList.contains("sh-news-" + kind) ? "" : "none";
+			});
+		});
+	});
+
+	// -- live status, the favorites row and the running count (home page) --
+	var favoriteRow = byId("hub-favorites"), runningCount = byId("hub-running-count"), lastApps = null;
+	if (!document.querySelector("[data-badge]") && !favoriteRow) { return; }
+	function label(app) { return app.healthy === false ? "unhealthy" : app.state; }
+	var WORDS = {"running": "Running", "starting": "Starting", "unhealthy": "Unhealthy", "stopped": "Stopped",
+		"not running": "Idle", "link": "Link", "external": "External"};
+	function renderFavorites(apps) {
+		if (!favoriteRow) { return; }
+		var mine = apps.filter(function (app) { return isFavorite(app.app_id); });
+		favoriteRow.parentNode.style.display = mine.length ? "" : "none";
+		while (favoriteRow.firstChild) { favoriteRow.removeChild(favoriteRow.firstChild); }
+		mine.forEach(function (app) {
+			var link = document.createElement("a"), icon = document.createElement("img"), name = document.createElement("span"),
+				badge = document.createElement("i");
+			link.href = app.href;
+			link.target = "_slaunch_" + app.app_id;
+			link.className = "sh-fav";
+			icon.src = app.icon;
+			icon.alt = "";
+			name.textContent = app.name;
+			badge.className = "hub-badge state-" + label(app).replace(/ /g, "-");
+			badge.title = WORDS[label(app)] || label(app);
+			link.appendChild(icon);
+			link.appendChild(name);
+			link.appendChild(badge);
+			favoriteRow.appendChild(link);
+		});
+	}
+	function poll() {
+		fetch("/api/apps", {credentials: "same-origin", cache: "no-store"})
+			.then(function (response) { return response.json(); })
+			.then(function (data) {
+				var byApp = {};
+				data.apps.forEach(function (app) { byApp[app.app_id] = app; states[app.app_id] = label(app); });
+				each("[data-badge]", function (badge) {
+					var app = byApp[badge.getAttribute("data-badge")], state = app ? label(app) : "";
+					badge.className = "hub-badge" + (state ? " state-" + state.replace(/ /g, "-") : "");
+					badge.title = WORDS[state] || state;
+				});
+				each("[data-badge-label]", function (text) {
+					var app = byApp[text.getAttribute("data-badge-label")], state = app ? label(app) : "";
+					text.textContent = WORDS[state] || state;
+					text.parentNode.className = "sh-state" + (state ? " is-" + state.replace(/ /g, "-") : "");
+				});
+				if (runningCount) {
+					runningCount.textContent = data.apps.filter(function (app) { return app.state === "running"; }).length;
+				}
+				lastApps = data.apps;
+				renderFavorites(data.apps);
+				applyFilter();
+			})
+			.catch(function () {})
+			.then(function () { setTimeout(poll, 10000); });
+	}
+	poll();
+})();
+</script>

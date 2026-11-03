@@ -1,0 +1,11 @@
+{% set news_icon = {"warning": "fa-exclamation-triangle", "info": "fa-info-circle"}.get(news_item.type, "fa-bullhorn") %}
+<article class="sh-news sh-news-{{ news_item.type if news_item.type in ('warning', 'info') else 'normal' }}">
+	<span class="sh-news-icon" aria-hidden="true"><i class="fa {{ news_icon }}"></i></span>
+	<div class="sh-news-body">
+		<header class="sh-news-head">
+			<h3>{{ news_item.title }}</h3>
+			{% if news_item.date %}<time>{{ news_item.date }}</time>{% end %}
+		</header>
+		{% if news_item.message %}<p>{{ news_item.message }}</p>{% end %}
+	</div>
+</article>

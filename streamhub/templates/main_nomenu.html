@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>{{ site_title }}{% if board_label %} · {{ board_label }}{% end %}</title>
+	{% include "_head.html" %}
+</head>
+<body class="sh-body sh-layout-bare">
+{# No menu: the brand, the page, a theme switch and the account menu (`"template-file": "main_nomenu.html"`). #}
+<header class="sh-bare-head">
+	{% include "_brand.html" %}
+	<div class="sh-bare-actions">
+		<button type="button" class="sh-icon-btn hub-theme" id="hub-theme" title="Switch light / dark" aria-label="Switch light or dark theme"><i class="fa fa-adjust"></i></button>
+		{% include "_user.html" %}
+	</div>
+</header>
+<main class="sh-main">
+{% if view == "news" %}
+	{% include "news.html" %}
+{% elif view == "home" %}
+	{% include "home.html" %}
+{% else %}
+	{% include "apps.html" %}
+{% end %}
+</main>
+{% include "_footer.html" %}
+{% include "_ux.html" %}
+</body>
+</html>

@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>{{ site_title }} · Admin</title>
+	{% include "_head.html" %}
+	<meta name="xsrf" content="{{ xsrf }}">
+</head>
+<body class="sh-body sh-layout-top sh-admin-page">
+{% include "_nav.html" %}
+<main class="sh-main admin">
+<div class="sh-admin" id="sh-admin">
+	<!-- Section menu: vertical on wide screens, collapsible to icons; a scrolling strip on phones -->
+	<aside class="sh-admin-nav" aria-label="Admin sections">
+		<button type="button" class="sh-admin-collapse" id="admin-collapse" aria-expanded="true" title="Collapse the menu">
+			<i class="fa fa-angle-double-left"></i><span>Collapse</span>
+		</button>
+		<nav class="sh-tabs" role="tablist">
+			<p class="sh-tabs-group">Monitor</p>
+			<button type="button" class="sh-tab active" data-tab="dashboard" role="tab" title="Dashboard"><i class="fa fa-tachometer"></i><span>Dashboard</span></button>
+			<button type="button" class="sh-tab" data-tab="network" role="tab" title="Network"><i class="fa fa-plug"></i><span>Network</span></button>
+			{% if is_admin %}
+			<p class="sh-tabs-group">Configuration</p>
+			<button type="button" class="sh-tab" data-tab="apps" role="tab" title="Apps"><i class="fa fa-cubes"></i><span>Apps</span></button>
+			<button type="button" class="sh-tab" data-tab="users" role="tab" title="Users"><i class="fa fa-user"></i><span>Users</span></button>
+			<button type="button" class="sh-tab" data-tab="news" role="tab" title="News"><i class="fa fa-newspaper-o"></i><span>News</span></button>
+			<button type="button" class="sh-tab" data-tab="settings" role="tab" title="Settings"><i class="fa fa-cog"></i><span>Settings</span></button>
+			<p class="sh-tabs-group">System</p>
+			<button type="button" class="sh-tab" data-tab="docker" role="tab" title="Docker"><i class="fa fa-ship"></i><span>Docker</span></button>
+			<button type="button" class="sh-tab" data-tab="static" role="tab" title="Static files"><i class="fa fa-folder-open-o"></i><span>Static files</span></button>
+			<button type="button" class="sh-tab" data-tab="sessions" role="tab" title="Sessions"><i class="fa fa-users"></i><span>Sessions</span></button>
+			<button type="button" class="sh-tab" data-tab="files" role="tab" title="JSON files"><i class="fa fa-file-code-o"></i><span>JSON files</span></button>
+			<button type="button" class="sh-tab" data-tab="backup" role="tab" title="Backup and restore"><i class="fa fa-history"></i><span>Backup</span></button>
+			{% end %}
+		</nav>
+	</aside>
+	<script>try { if (localStorage.getItem("streamhub-admin-nav") === "collapsed") { document.getElementById("sh-admin").classList.add("is-collapsed"); } } catch (e) {}</script>
+	<div class="sh-admin-body">
+	<div class="sh-page-head">
+		<div>
+			<p class="sh-eyebrow">Administration</p>
+			<h1 class="sh-page-title">Admin</h1>
+			<p class="sh-page-sub" id="meta">Streamhub {{ version }}{% if instance %} · instance <b>{{ instance }}</b>{% end %} · <span id="uptime">…</span></p>
+		</div>
+	</div>
+
+	<div id="problems" class="sh-alert sh-alert-bad" role="alert" style="display: none;"></div>
+	<div id="action-result" class="sh-toast" role="status" aria-live="polite"></div>
+
+	<!-- Dashboard: server load and every app -->
+	<section class="sh-tab-panel active" data-panel="dashboard">
+		<div class="sh-card sh-checklist" id="checklist" hidden>
+			<div class="sh-card-head">
+				<h2><i class="fa fa-flag-checkered"></i> Getting started</h2>
+				<button type="button" class="btn btn-sm sh-btn-quiet" id="checklist-hide">Hide</button>
+			</div>
+			<ol id="checklist-steps"></ol>
+		</div>
+		<div class="sh-stats">
+			<div class="sh-stat">
+				<div class="sh-stat-head"><i class="fa fa-microchip"></i> CPU</div>
+				<b id="cpu">–</b>
+				<div class="sh-meter"><span id="cpu-bar"></span></div>
+				<div class="sh-cores" id="cores" title="Per CPU"></div>
+				<small id="cpus"></small>
+			</div>
+			<div class="sh-stat">
+				<div class="sh-stat-head"><i class="fa fa-server"></i> Memory</div>
+				<b id="memory">–</b>
+				<div class="sh-meter"><span id="memory-bar"></span></div>
+				<small id="memory-detail"></small>
+			</div>
+			<div class="sh-stat">
+				<div class="sh-stat-head"><i class="fa fa-line-chart"></i> Load 1 / 5 / 15 min</div>
+				<b id="load">–</b>
+				<small>Share of all CPUs</small>
+			</div>
+			<div class="sh-stat">
+				<div class="sh-stat-head"><i class="fa fa-cubes"></i> Apps</div>
+				<b id="apps-running">–</b>
+				<small id="apps-detail"></small>
+			</div>
+			<div class="sh-stat">
+				<div class="sh-stat-head"><i class="fa fa-plug"></i> Open sessions</div>
+				<b id="sessions-open">–</b>
+				<small>WebSocket connections to apps</small>
+			</div>
+			<div class="sh-stat">
+				<div class="sh-stat-head"><i class="fa fa-folder-open-o"></i> Temp folder
+					<button type="button" class="sh-icon-btn is-bad sh-stat-action" id="temp-purge" title="Purge the temp folder" aria-label="Purge the temp folder"><i class="fa fa-trash"></i></button></div>
+				<b id="temp">–</b>
+				<small id="temp-path" class="sh-ellipsis"></small>
+			</div>
+		</div>
+
+		<div class="sh-card">
+			<div class="sh-card-head">
+				<h2><i class="fa fa-cubes"></i> Apps</h2>
+				<div class="sh-toolbar">
+					<div class="sh-search sh-search-sm"><i class="fa fa-search" aria-hidden="true"></i>
+						<input type="search" id="app-search" class="form-control form-control-sm" placeholder="Filter apps" aria-label="Filter apps"></div>
+					<div class="sh-filters" role="group" aria-label="App state">
+						<button type="button" class="sh-filter active" data-state="all">All</button>
+						<button type="button" class="sh-filter" data-state="running">Running</button>
+						<button type="button" class="sh-filter" data-state="idle">Idle</button>
+						<button type="button" class="sh-filter" data-state="problem">Problems</button>
+					</div>
+				</div>
+			</div>
+			<div class="sh-table-wrap">
+				<table class="sh-table sh-table-stack">
+					<thead><tr><th>App</th><th>Status</th><th>Runtime</th><th>PID / port</th><th>Sessions</th><th>Memory</th><th>CPU</th>
+						<th>Up since</th><th>Last access</th><th>Requests today</th><th class="text-right">Actions</th></tr></thead>
+					<tbody id="apps"><tr><td colspan="11" class="sh-muted text-center"><i class="fa fa-circle-o-notch fa-spin"></i> Loading apps…</td></tr></tbody>
+				</table>
+			</div>
+			<div class="sh-empty" id="apps-empty">No app matches.</div>
+		</div>
+	</section>
+
+	{% if is_admin %}
+	<!-- Apps and boards (streamhub-apps.json) -->
+	<section class="sh-tab-panel" data-panel="apps">
+		<p class="sh-muted small" id="catalog-order-hint"></p>
+		<div class="sh-card">
+			<div class="sh-card-head">
+				<h2><i class="fa fa-th-large"></i> Boards</h2>
+				<button type="button" class="btn btn-sm sh-btn-primary" id="board-add"><i class="fa fa-plus"></i> Add board</button>
+			</div>
+			<div class="sh-table-wrap" id="boards"></div>
+		</div>
+		<div class="sh-card">
+			<div class="sh-card-head">
+				<h2><i class="fa fa-cubes"></i> Apps</h2>
+				<div class="sh-toolbar">
+					<div class="sh-search sh-search-sm"><i class="fa fa-search" aria-hidden="true"></i>
+						<input type="search" id="catalog-search" class="form-control form-control-sm" placeholder="Filter apps" aria-label="Filter apps"></div>
+					<button type="button" class="btn btn-sm sh-btn-primary" id="app-add"><i class="fa fa-plus"></i> Add app</button>
+				</div>
+			</div>
+			<div class="sh-table-wrap" id="catalog"></div>
+		</div>
+	</section>
+
+	<!-- Users (streamhub-users.json) -->
+	<section class="sh-tab-panel" data-panel="users">
+		<div class="sh-card">
+			<div class="sh-card-head">
+				<h2><i class="fa fa-user"></i> Users</h2>
+				<button type="button" class="btn btn-sm sh-btn-primary" id="user-add"><i class="fa fa-plus"></i> Add user</button>
+			</div>
+			<p class="sh-muted small" id="users-note"></p>
+			<div class="sh-table-wrap" id="users"></div>
+		</div>
+	</section>
+
+	<!-- News (streamhub-news.json) -->
+	<section class="sh-tab-panel" data-panel="news">
+		<div class="sh-card">
+			<div class="sh-card-head">
+				<h2><i class="fa fa-newspaper-o"></i> News</h2>
+				<button type="button" class="btn btn-sm sh-btn-primary" id="news-add"><i class="fa fa-plus"></i> Add news</button>
+			</div>
+			<p class="sh-muted small">The home page shows the first three.</p>
+			<div class="sh-table-wrap" id="news"></div>
+		</div>
+	</section>
+
+	<!-- Settings (streamhub.json) -->
+	<section class="sh-tab-panel" data-panel="settings">
+		<p class="sh-muted small">An empty field uses the default, shown in gray. Saving applies the settings at once; those marked
+			<span class="sh-chip sh-chip-muted">restart</span> apply after a restart. Keys this form doesn't show are kept.</p>
+		<div id="settings"></div>
+		<div class="sh-settings-bar">
+			<button type="button" class="btn btn-sm sh-btn-primary" id="settings-save"><i class="fa fa-save"></i> Save and apply</button>
+			<button type="button" class="btn btn-sm sh-btn-quiet" id="settings-reset"><i class="fa fa-undo"></i> Discard changes</button>
+		</div>
+	</section>
+
+	<!-- Docker: the daemon, containers and images -->
+	<section class="sh-tab-panel" data-panel="docker">
+		<div class="sh-card">
+			<div class="sh-card-head">
+				<h2><i class="fa fa-ship"></i> Docker</h2>
+				<button type="button" class="btn btn-sm sh-btn-quiet" id="docker-load"><i class="fa fa-refresh"></i> Refresh</button>
+			</div>
+			<div id="docker-state"><p class="sh-muted small">Loading…</p></div>
+		</div>
+		<div class="sh-card">
+			<div class="sh-card-head">
+				<h2><i class="fa fa-cube"></i> Containers</h2>
+				<div class="sh-toolbar">
+				<div class="sh-search sh-search-sm"><i class="fa fa-search" aria-hidden="true"></i>
+					<input type="search" id="containers-search" class="form-control form-control-sm" placeholder="Filter containers" aria-label="Filter containers"></div>
+				<div class="sh-filters" role="group" aria-label="Containers">
+					<button type="button" class="sh-filter active" data-containers="all">All</button>
+					<button type="button" class="sh-filter" data-containers="apps">Streamhub apps</button>
+					<button type="button" class="sh-filter" data-containers="running">Running</button>
+				</div>
+				</div>
+			</div>
+			<div class="sh-table-wrap" id="docker-containers"></div>
+		</div>
+		<div class="sh-card">
+			<div class="sh-card-head">
+				<h2><i class="fa fa-clone"></i> Images</h2>
+				<div class="sh-search sh-search-sm"><i class="fa fa-search" aria-hidden="true"></i>
+					<input type="search" id="images-search" class="form-control form-control-sm" placeholder="Filter images" aria-label="Filter images"></div>
+				<form class="sh-inline-form sh-pull" id="docker-pull">
+					<input class="form-control form-control-sm" id="docker-pull-image" placeholder="Image to pull, e.g. python:3.12-slim" aria-label="Image to pull" spellcheck="false">
+					<button type="submit" class="btn btn-sm sh-btn-primary"><i class="fa fa-download"></i> Pull</button>
+				</form>
+			</div>
+			<p class="small" id="docker-result" role="status"></p>
+			<div class="sh-table-wrap" id="docker-images"></div>
+		</div>
+	</section>
+
+	<!-- Static files: the cdf folder, served at /cdf/ -->
+	<section class="sh-tab-panel" data-panel="static">
+		<div class="sh-card" id="cdf-card">
+			<div class="sh-card-head">
+				<h2><i class="fa fa-folder-open-o"></i> <span id="cdf-crumbs"></span></h2>
+				<div class="sh-toolbar">
+					<div class="sh-search sh-search-sm"><i class="fa fa-search" aria-hidden="true"></i>
+						<input type="search" id="cdf-search" class="form-control form-control-sm" placeholder="Filter files" aria-label="Filter files"></div>
+					<button type="button" class="btn btn-sm sh-btn-quiet" id="cdf-folder"><i class="fa fa-folder-o"></i> New folder</button>
+					<label class="btn btn-sm sh-btn-primary mb-0" for="cdf-files"><i class="fa fa-upload"></i> Upload</label>
+					<input type="file" id="cdf-files" multiple hidden>
+				</div>
+			</div>
+			<p class="sh-muted small" id="cdf-note"></p>
+			<div class="sh-table-wrap" id="cdf"></div>
+			<p class="sh-muted small sh-drop-hint"><i class="fa fa-cloud-upload"></i> Drop files here to upload them to this folder (16 MB per upload).</p>
+		</div>
+	</section>
+
+	<!-- Sessions -->
+	<section class="sh-tab-panel" data-panel="sessions">
+		<div class="sh-card">
+			<div class="sh-card-head">
+				<h2><i class="fa fa-users"></i> Active sessions</h2>
+				<button class="btn btn-sm sh-btn-quiet" id="sessions-load"><i class="fa fa-refresh"></i> Refresh</button>
+			</div>
+			<p class="sh-muted small">Revoking ends a session on every instance within seconds. “All of user” also ends sessions from before 2.2.</p>
+			<div class="small" id="sessions-result" role="status"></div>
+			<div class="sh-table-wrap" id="sessions"></div>
+		</div>
+	</section>
+
+	<!-- JSON files and git -->
+	<section class="sh-tab-panel" data-panel="files">
+		<div class="sh-card">
+			<div class="sh-card-head">
+				<h2><i class="fa fa-file-code-o"></i> JSON files</h2>
+				<div class="sh-segmented" role="group" aria-label="File" id="file-keys">
+					<button type="button" data-file="config">Config</button>
+					<button type="button" data-file="apps">Apps</button>
+					<button type="button" data-file="users">Users</button>
+					<button type="button" data-file="news">News</button>
+				</div>
+			</div>
+			<p class="sh-muted small" id="file-hint">Pick a file to edit. Saves are validated like <code>streamhub check</code> and written atomically.</p>
+			<div id="file-box" style="display: none;">
+				<div class="sh-editor-bar">
+					<span class="sh-muted small sh-ellipsis" id="file-path"></span>
+					<span class="sh-json-state" id="file-valid"></span>
+				</div>
+				<textarea class="form-control sh-editor" id="file-text" rows="22" spellcheck="false"></textarea>
+				<div class="sh-editor-actions">
+					<button class="btn btn-sm sh-btn-primary" id="file-save"><i class="fa fa-save"></i> Save</button>
+					<button class="btn btn-sm sh-btn-quiet" id="file-format"><i class="fa fa-align-left"></i> Format</button>
+					<button class="btn btn-sm sh-btn-quiet" id="file-reload"><i class="fa fa-undo"></i> Reload from disk</button>
+					<span class="small" id="file-result" role="status"></span>
+				</div>
+			</div>
+		</div>
+
+		<div class="sh-card">
+			<div class="sh-card-head">
+				<h2><i class="fa fa-code-fork"></i> Git (config folder)</h2>
+			</div>
+			<p class="sh-muted small">Commits include only the config, apps and news files, never the users file.</p>
+			<div class="sh-git">
+				<button class="btn btn-sm sh-btn-quiet" data-git="status"><i class="fa fa-info-circle"></i> Status</button>
+				<button class="btn btn-sm sh-btn-quiet" data-git="pull"><i class="fa fa-download"></i> Pull</button>
+				<input class="form-control form-control-sm" id="git-message" placeholder="Commit message" />
+				<button class="btn btn-sm sh-btn-primary" data-git="push"><i class="fa fa-upload"></i> Commit and push</button>
+			</div>
+			<pre class="log-output" id="git-output" style="display: none;"></pre>
+		</div>
+	</section>
+	{% end %}
+
+	{% if is_admin %}
+	<!-- Backup and restore of the JSON files -->
+	<section class="sh-tab-panel" data-panel="backup">
+		<div class="sh-card">
+			<div class="sh-card-head">
+				<h2><i class="fa fa-download"></i> Back up</h2>
+				<a class="btn btn-sm sh-btn-primary" href="/api/admin/backup" download><i class="fa fa-download"></i> Download backup</a>
+			</div>
+			<p class="sh-muted small mb-0">One JSON file with streamhub.json and the apps, users and news files, as they are on disk. It holds the
+				password hashes and any secret written in the config: keep it somewhere safe. Static files (cdf) are not included.</p>
+		</div>
+		<div class="sh-card" id="restore-card">
+			<div class="sh-card-head">
+				<h2><i class="fa fa-upload"></i> Restore</h2>
+				<label class="btn btn-sm sh-btn-quiet mb-0" for="restore-file"><i class="fa fa-folder-open-o"></i> Choose a backup file</label>
+				<input type="file" id="restore-file" accept=".json,application/json" hidden>
+			</div>
+			<p class="sh-muted small">Choose the files to restore. Each one is checked first, and if any is invalid nothing changes. The current
+				files are saved in the <code>backups</code> folder of the config before they are replaced; a restored config applies at once.</p>
+			<div id="restore-box"></div>
+		</div>
+	</section>
+	{% end %}
+
+	<!-- Network -->
+	<section class="sh-tab-panel" data-panel="network">
+		<div class="sh-card">
+			<div class="sh-card-head">
+				<h2><i class="fa fa-plug"></i> Listening ports</h2>
+				<div class="sh-toolbar">
+					<div class="sh-search sh-search-sm"><i class="fa fa-search" aria-hidden="true"></i>
+						<input type="search" id="ports-search" class="form-control form-control-sm" placeholder="Filter ports" aria-label="Filter ports"></div>
+					<button class="btn btn-sm sh-btn-quiet" id="ports-load"><i class="fa fa-refresh"></i> Refresh</button>
+				</div>
+			</div>
+			<div class="sh-table-wrap" id="ports"><p class="sh-muted small">Loading…</p></div>
+		</div>
+	</section>
+	</div>
+</div>
+</main>
+
+<!-- Log and CPU affinity dialogs -->
+<div class="sh-modal" id="log-box" role="dialog" aria-modal="true" aria-labelledby="log-title" hidden>
+	<div class="sh-modal-card sh-modal-wide">
+		<div class="sh-modal-head">
+			<h2 id="log-title"><i class="fa fa-terminal"></i> Log: <span id="log-app"></span></h2>
+			<label class="sh-check small"><input type="checkbox" id="log-follow" checked> <span>Follow</span></label>
+			<button class="btn btn-sm sh-btn-quiet" id="log-refresh"><i class="fa fa-refresh"></i></button>
+			<button class="sh-icon-btn" id="log-close" aria-label="Close"><i class="fa fa-times"></i></button>
+		</div>
+		<pre class="log-output sh-log-tall" id="log"></pre>
+	</div>
+</div>
+<div class="sh-modal" id="editor-box" role="dialog" aria-modal="true" aria-labelledby="editor-title" hidden>
+	<form class="sh-modal-card sh-modal-form" id="editor-form" novalidate>
+		<div class="sh-modal-head">
+			<h2 id="editor-title"></h2>
+			<button type="button" class="sh-icon-btn" data-close aria-label="Close"><i class="fa fa-times"></i></button>
+		</div>
+		<div id="editor-fields"></div>
+		<div class="sh-alert sh-alert-bad small" id="editor-error" role="alert" hidden></div>
+		<div class="sh-editor-actions">
+			<button type="submit" class="btn btn-sm sh-btn-primary"><i class="fa fa-save"></i> Save</button>
+			<button type="button" class="btn btn-sm sh-btn-quiet" data-close>Cancel</button>
+		</div>
+	</form>
+</div>
+<div class="sh-modal" id="text-box" role="dialog" aria-modal="true" aria-labelledby="text-title" hidden>
+	<div class="sh-modal-card sh-modal-wide">
+		<div class="sh-modal-head">
+			<h2 id="text-title"></h2>
+			<button class="sh-icon-btn" id="text-close" aria-label="Close"><i class="fa fa-times"></i></button>
+		</div>
+		<pre class="log-output sh-log-tall" id="text-body"></pre>
+	</div>
+</div>
+<div class="sh-modal" id="affinity-box" role="dialog" aria-modal="true" aria-labelledby="affinity-title" hidden>
+	<div class="sh-modal-card">
+		<div class="sh-modal-head">
+			<h2 id="affinity-title"><i class="fa fa-microchip"></i> CPU affinity: <span id="affinity-app"></span></h2>
+			<button class="sh-icon-btn" id="affinity-close" aria-label="Close"><i class="fa fa-times"></i></button>
+		</div>
+		<p class="sh-muted small">CPUs the app's root process may run on, comma separated.</p>
+		<div class="sh-inline-form">
+			<input class="form-control form-control-sm" id="affinity" placeholder="0,1,2" />
+			<button class="btn btn-sm sh-btn-primary" id="affinity-apply">Apply</button>
+		</div>
+		<p class="small" id="affinity-result" role="status"></p>
+	</div>
+</div>
+
+{% include "_footer.html" %}
+{% include "_ux.html" %}
+<script>
+(function () {
+	"use strict";
+	var XSRF = document.querySelector("meta[name=xsrf]").content;
+
+	function api(method, url, body) {
+		var options = {method: method, credentials: "same-origin", cache: "no-store", headers: {"X-XSRFToken": XSRF}};
+		if (body !== undefined) { options.headers["Content-Type"] = "application/json"; options.body = JSON.stringify(body); }
+		return fetch(url, options).then(function (response) {
+			var type = response.headers.get("Content-Type") || "";
+			var read = type.indexOf("json") !== -1 ? response.json() : response.text();
+			return read.then(function (data) {
+				if (!response.ok && !(data && data.error)) { throw new Error(response.status + " " + response.statusText); }
+				return data;
+			});
+		});
+	}
+	function $(id) { return document.getElementById(id); }
+	function el(tag, text, className) {
+		var node = document.createElement(tag);
+		if (text !== undefined && text !== null) { node.textContent = text; }
+		if (className) { node.className = className; }
+		return node;
+	}
+	function clear(node) { while (node.firstChild) { node.removeChild(node.firstChild); } }
+	function setText(id, text) { $(id).textContent = text; }
+	function each(selector, fn) { Array.prototype.forEach.call(document.querySelectorAll(selector), fn); }
+	function bytes(n) {
+		var units = ["B", "KB", "MB", "GB"], i = 0;
+		while (n >= 1024 && i < units.length - 1) { n /= 1024; i++; }
+		return n.toFixed(i ? 1 : 0) + " " + units[i];
+	}
+	function ago(iso) {
+		if (!iso) { return "–"; }
+		var seconds = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
+		if (seconds < 60) { return "just now"; }
+		if (seconds < 3600) { return Math.floor(seconds / 60) + " min ago"; }
+		if (seconds < 86400) { return Math.floor(seconds / 3600) + " h ago"; }
+		return Math.floor(seconds / 86400) + " d ago";
+	}
+	function meter(id, percent) {
+		var bar = $(id);
+		bar.style.width = Math.min(100, percent) + "%";
+		bar.className = percent > 85 ? "is-bad" : percent > 65 ? "is-warn" : "";
+	}
+	function toast(text, bad) {
+		var box = $("action-result");
+		box.textContent = text;
+		box.className = "sh-toast show" + (bad ? " is-bad" : "");
+		clearTimeout(toast.timer);
+		toast.timer = setTimeout(function () { box.className = "sh-toast"; }, 4000);
+	}
+	function iconButton(icon, title, className, onClick) {
+		var b = el("button", null, "sh-icon-btn " + (className || ""));
+		b.type = "button";
+		b.title = title;
+		b.setAttribute("aria-label", title);
+		b.appendChild(el("i", null, "fa " + icon));
+		b.addEventListener("click", onClick);
+		return b;
+	}
+
+	// -- tabs (remembered in the URL hash) --
+	function showTab(name) {
+		if (name === "config") { name = "files"; }  // the tab's name before 2.2
+		var tab = document.querySelector('[data-tab="' + name + '"]');
+		if (!tab) { name = "dashboard"; tab = document.querySelector('[data-tab="dashboard"]'); }
+		each("[data-tab]", function (t) { t.classList.toggle("active", t === tab); t.setAttribute("aria-selected", t === tab); });
+		each("[data-panel]", function (p) { p.classList.toggle("active", p.getAttribute("data-panel") === name); });
+		if (name === "sessions") { loadSessions(); }
+		if (name === "network") { loadPorts(); }
+		document.dispatchEvent(new CustomEvent("sh-tab", {detail: name}));
+	}
+	each("[data-tab]", function (tab) {
+		tab.addEventListener("click", function () {
+			history.replaceState(null, "", "#" + tab.getAttribute("data-tab"));
+			showTab(tab.getAttribute("data-tab"));
+		});
+	});
+
+	// -- dialogs --
+	function openModal(id) { $(id).hidden = false; document.body.classList.add("sh-modal-open"); }
+	function closeModal(id) {
+		$(id).hidden = true;
+		if (!document.querySelector(".sh-modal:not([hidden])")) { document.body.classList.remove("sh-modal-open"); }
+	}
+	each(".sh-modal", function (modal) {
+		modal.addEventListener("click", function (event) { if (event.target === modal) { closeModal(modal.id); } });
+	});
+	document.addEventListener("keydown", function (event) {
+		if (event.key === "Escape") { each(".sh-modal:not([hidden])", function (m) { closeModal(m.id); }); }
+	});
+
+	// -- apps --
+	function usageChart(hours) {
+		var ns = "http://www.w3.org/2000/svg", svg = document.createElementNS(ns, "svg"), max = Math.max.apply(null, hours.concat([1]));
+		svg.setAttribute("viewBox", "0 0 120 24");
+		svg.setAttribute("class", "usage");
+		var now = new Date().getHours();
+		hours.forEach(function (count, hour) {
+			var bar = document.createElementNS(ns, "rect"), height = Math.max(count ? 2 : 1, Math.round(count / max * 22));
+			bar.setAttribute("x", hour * 5);
+			bar.setAttribute("y", 24 - height);
+			bar.setAttribute("width", "4");
+			bar.setAttribute("height", height);
+			bar.setAttribute("rx", "1");
+			if (!count) { bar.setAttribute("class", "zero"); }
+			if (hour === now) { bar.setAttribute("class", (count ? "" : "zero ") + "now"); }
+			var tip = document.createElementNS(ns, "title");
+			tip.textContent = hour + ":00 – " + count + " request(s)";
+			bar.appendChild(tip);
+			svg.appendChild(bar);
+		});
+		var wrap = el("span", null, "sh-usage");
+		wrap.appendChild(svg);
+		wrap.appendChild(el("b", String(hours.reduce(function (a, b) { return a + b; }, 0))));
+		return wrap;
+	}
+	function control(appId, action) {
+		toast(action.charAt(0).toUpperCase() + action.slice(1) + " " + appId + "…");
+		api("POST", "/api/apps/" + encodeURIComponent(appId) + "/" + action)
+			.then(function (data) { toast(appId + ": " + data.state); refresh(); })
+			.catch(function (error) { toast(appId + ": " + error.message, true); });
+	}
+	function stateOf(app) {
+		if (app.healthy === false) { return "unhealthy"; }
+		return app.state;
+	}
+	var appFilter = "all", lastApps = [];
+	function cell(row, label, content, className) {
+		var td = el("td", null, className);
+		td.setAttribute("data-label", label);
+		if (content instanceof Node) { td.appendChild(content); } else { td.textContent = content; }
+		row.appendChild(td);
+		return td;
+	}
+	function renderApps(apps) {
+		lastApps = apps;
+		var body = $("apps"), query = $("app-search").value.trim().toLowerCase(), shown = 0;
+		clear(body);
+		apps.forEach(function (app) {
+			var state = stateOf(app), running = app.state === "running" || app.state === "starting";
+			var problem = state === "unhealthy" || (app.state === "stopped" && app.exit_code);
+			if (query && (app.app_id + " " + app.name).toLowerCase().indexOf(query) === -1) { return; }
+			if ((appFilter === "running" && !running) || (appFilter === "idle" && running) || (appFilter === "problem" && !problem)) { return; }
+			shown++;
+			var row = el("tr");
+			var name = el("div", null, "sh-app-cell");
+			name.appendChild(el("b", app.name));
+			if (app.name !== app.app_id) { name.appendChild(el("small", app.app_id)); }
+			cell(row, "App", name);
+			var pill = el("span", null, "sh-pill is-" + state.replace(/ /g, "-"));
+			pill.appendChild(el("i", null, "hub-badge state-" + state.replace(/ /g, "-")));
+			pill.appendChild(document.createTextNode(state === "not running" ? "idle" : state));
+			var status = el("div");
+			status.appendChild(pill);
+			if (app.exit_code !== undefined && app.exit_code !== null) { status.appendChild(el("small", "exit code " + app.exit_code, "sh-muted d-block")); }
+			cell(row, "Status", status);
+			var runtime = el("div");
+			runtime.appendChild(el("span", app.runtime, "sh-chip"));
+			if (app.health_path) { runtime.appendChild(el("small", "/" + app.health_path, "sh-muted d-block")); }
+			cell(row, "Runtime", runtime);
+			cell(row, "PID / port", app.pid ? app.pid + " / " + (app.port || "–") : "–", "sh-mono");
+			cell(row, "Sessions", app.sessions === undefined ? "–" : String(app.sessions));
+			cell(row, "Memory", app.memory_kb ? bytes(app.memory_kb * 1024) : "–", "nowrap");
+			cell(row, "CPU", app.cpu_percent === null || app.cpu_percent === undefined ? "–" : app.cpu_percent + "%");
+			cell(row, "Up since", running ? ago(app.started) : "–", "nowrap").title = app.started || "";
+			cell(row, "Last access", ago(app.last_access), "nowrap").title = app.last_access || "";
+			cell(row, "Requests today", app.usage ? usageChart(app.usage) : "–");
+			var actions = el("div", null, "sh-row-actions");
+			if (running) {
+				actions.appendChild(iconButton("fa-stop", "Stop", "is-bad", function () { control(app.app_id, "stop"); }));
+				actions.appendChild(iconButton("fa-repeat", "Restart", "is-warn", function () { control(app.app_id, "restart"); }));
+				if (app.pid) { actions.appendChild(iconButton("fa-microchip", "CPU affinity", "", function () { showAffinity(app.app_id); })); }
+			} else if (app.runtime !== "external") {
+				actions.appendChild(iconButton("fa-play", "Start", "is-ok", function () { control(app.app_id, "start"); }));
+			}
+			actions.appendChild(iconButton("fa-terminal", "Log", "", function () { showLog(app.app_id); }));
+			cell(row, "Actions", actions, "text-right");
+			body.appendChild(row);
+		});
+		$("apps-empty").style.display = shown ? "none" : "block";
+	}
+	$("app-search").addEventListener("input", function () { renderApps(lastApps); });
+	each("[data-state]", function (button) {
+		button.addEventListener("click", function () {
+			appFilter = button.getAttribute("data-state");
+			each("[data-state]", function (b) { b.classList.toggle("active", b === button); });
+			renderApps(lastApps);
+		});
+	});
+
+	// -- log dialog --
+	var logApp = null, logTimer = null;
+	function loadLog() {
+		if (!logApp) { return; }
+		api("GET", "/api/apps/" + encodeURIComponent(logApp) + "/log?bytes=131072").then(function (text) {
+			var box = $("log"), atEnd = box.scrollTop + box.clientHeight >= box.scrollHeight - 20;
+			box.textContent = text || "No output yet.";
+			if (atEnd || $("log-follow").checked) { box.scrollTop = box.scrollHeight; }
+		});
+	}
+	function showLog(appId) {
+		logApp = appId;
+		setText("log-app", appId);
+		$("log").textContent = "Loading…";
+		openModal("log-box");
+		loadLog();
+		clearInterval(logTimer);
+		logTimer = setInterval(function () { if ($("log-follow").checked) { loadLog(); } }, 3000);
+	}
+	$("log-refresh").addEventListener("click", loadLog);
+	$("log-close").addEventListener("click", function () { clearInterval(logTimer); closeModal("log-box"); });
+
+	// -- affinity dialog --
+	var affinityApp = null;
+	function showAffinity(appId) {
+		affinityApp = appId;
+		setText("affinity-app", appId);
+		setText("affinity-result", "");
+		openModal("affinity-box");
+		api("GET", "/api/apps/" + encodeURIComponent(appId) + "/affinity").then(function (data) {
+			$("affinity").value = data.cpus === null ? "" : data.cpus.join(",");
+			setText("affinity-result", data.cpus === null ? "Not supported on this system." : data.count + " CPU(s) on this server");
+		}).catch(function (error) { setText("affinity-result", error.message); });
+	}
+	$("affinity-apply").addEventListener("click", function () {
+		var cpus = $("affinity").value.split(",").map(function (x) { return parseInt(x, 10); })
+			.filter(function (x) { return !isNaN(x); });
+		api("POST", "/api/apps/" + encodeURIComponent(affinityApp) + "/affinity", {cpus: cpus})
+			.then(function (data) { setText("affinity-result", data.error || "Now on CPUs " + data.cpus.join(",")); })
+			.catch(function (error) { setText("affinity-result", error.message); });
+	});
+	$("affinity-close").addEventListener("click", function () { closeModal("affinity-box"); });
+
+	// -- section menu: collapsed to icons, remembered per browser --
+	$("admin-collapse").addEventListener("click", function () {
+		var collapsed = $("sh-admin").classList.toggle("is-collapsed");
+		this.setAttribute("aria-expanded", collapsed ? "false" : "true");
+		this.title = collapsed ? "Expand the menu" : "Collapse the menu";
+		try { localStorage.setItem("streamhub-admin-nav", collapsed ? "collapsed" : "expanded"); } catch (e) {}
+	});
+	if ($("sh-admin").classList.contains("is-collapsed")) {
+		$("admin-collapse").setAttribute("aria-expanded", "false");
+		$("admin-collapse").title = "Expand the menu";
+	}
+
+	// -- temp folder --
+	$("temp-purge").addEventListener("click", function () {
+		if (!window.confirm("Delete everything in the temp folder? Files that running apps still use are skipped, but apps may lose files they wrote there.")) { return; }
+		api("POST", "/api/admin/temp/purge")
+			.then(function (data) { toast("Temp folder purged: " + bytes(data.bytes) + " in " + data.files + " file(s) left."); refresh(); })
+			.catch(function (error) { toast("Purge failed: " + error.message, true); });
+	});
+
+	// -- dashboard refresh --
+	function refresh() {
+		return api("GET", "/api/admin/state").then(function (state) {
+			var s = state.server;
+			setText("cpu", s.cpu_percent.toFixed(1) + "%");
+			meter("cpu-bar", s.cpu_percent);
+			setText("cpus", s.cpu_count + " logical CPU(s)");
+			var cores = $("cores");
+			clear(cores);
+			(s.per_cpu || []).forEach(function (p, i) {
+				var core = el("span");
+				core.style.height = Math.max(2, Math.round(p / 100 * 22)) + "px";
+				core.title = "CPU " + i + ": " + p + "%";
+				core.className = p > 85 ? "is-bad" : p > 65 ? "is-warn" : "";
+				cores.appendChild(core);
+			});
+			setText("memory", s.memory_percent.toFixed(1) + "%");
+			meter("memory-bar", s.memory_percent);
+			setText("memory-detail", s.memory_used_gb + " of " + s.memory_total_gb + " GB");
+			setText("load", s.load_percent ? s.load_percent.map(function (x) { return x + "%"; }).join(" / ") : "n/a");
+			setText("temp", bytes(state.temp.bytes));
+			setText("temp-path", state.temp.files + " file(s) in " + state.temp.path);
+			$("temp-path").title = state.temp.path;
+			var running = state.apps.filter(function (a) { return a.state === "running"; }).length;
+			var unhealthy = state.apps.filter(function (a) { return a.healthy === false; }).length;
+			setText("apps-running", running + " / " + state.apps.length);
+			setText("apps-detail", "running" + (unhealthy ? " · " + unhealthy + " unhealthy" : ""));
+			setText("sessions-open", state.apps.reduce(function (n, a) { return n + (a.sessions || 0); }, 0));
+			setText("uptime", "up " + ago(state.started).replace(" ago", ""));
+			renderApps(state.apps);
+			var problems = $("problems");
+			clear(problems);
+			(state.problems || []).forEach(function (p) {
+				var line = el("div");
+				line.appendChild(el("i", null, "fa fa-exclamation-triangle"));
+				line.appendChild(document.createTextNode(" " + p));
+				problems.appendChild(line);
+			});
+			problems.style.display = (state.problems || []).length ? "" : "none";
+			renderChecklist(state.checklist || []);
+		}).catch(function (error) { toast("Refresh failed: " + error.message, true); });
+	}
+	// Getting started: the first steps of a new hub, until they are done or hidden.
+	function checklistHidden() { try { return localStorage.getItem("streamhub-checklist") === "hidden"; } catch (e) { return false; } }
+	function renderChecklist(steps) {
+		var box = $("checklist"), list = $("checklist-steps"), open = steps.filter(function (s) { return !s.done; }).length;
+		box.hidden = !open || checklistHidden();
+		if (box.hidden) { return; }
+		clear(list);
+		steps.forEach(function (step) {
+			var item = el("li", null, step.done ? "is-done" : ""), link = el("a"), text = el("div");
+			link.href = "#" + step.tab;
+			link.appendChild(el("i", null, "fa " + (step.done ? "fa-check-circle" : "fa-circle-o")));
+			text.appendChild(el("b", step.title));
+			text.appendChild(el("small", step.hint));
+			link.appendChild(text);
+			item.appendChild(link);
+			list.appendChild(item);
+		});
+	}
+	$("checklist-hide").addEventListener("click", function () {
+		try { localStorage.setItem("streamhub-checklist", "hidden"); } catch (e) {}
+		$("checklist").hidden = true;
+	});
+	(function loop() { refresh().then(function () { setTimeout(loop, 5000); }); })();
+
+	// -- network --
+	var ports = [];
+	function renderPorts() {
+		var box = $("ports"), query = $("ports-search").value.trim().toLowerCase();
+		clear(box);
+		var table = el("table", null, "sh-table"), head = el("tr"), thead = el("thead"), body = el("tbody");
+		["Address", "PID", "Process"].forEach(function (h) { head.appendChild(el("th", h)); });
+		thead.appendChild(head);
+		table.appendChild(thead);
+		ports.filter(function (p) { return !query || (p.address + " " + p.pid + " " + p.process).toLowerCase().indexOf(query) !== -1; })
+			.forEach(function (p) {
+				var row = el("tr");
+				[p.address, p.pid, p.process].forEach(function (v, i) { row.appendChild(el("td", v, i < 2 ? "sh-mono" : "")); });
+				body.appendChild(row);
+			});
+		table.appendChild(body);
+		box.appendChild(table);
+	}
+	function loadPorts() {
+		api("GET", "/api/admin/ports").then(function (data) {
+			if (data.error) { clear($("ports")); $("ports").appendChild(el("p", data.error, "sh-muted")); return; }
+			ports = data.ports;
+			renderPorts();
+		});
+	}
+	$("ports-load").addEventListener("click", loadPorts);
+	$("ports-search").addEventListener("input", renderPorts);
+
+	// -- sessions (admins) --
+	function revoke(body, label) {
+		api("POST", "/api/admin/sessions", body)
+			.then(function () { setText("sessions-result", label + " revoked."); loadSessions(); })
+			.catch(function (error) { setText("sessions-result", error.message); });
+	}
+	function loadSessions() {
+		if (!$("sessions")) { return; }
+		api("GET", "/api/admin/sessions").then(function (data) {
+			var box = $("sessions");
+			clear(box);
+			if (!data.sessions.length) { box.appendChild(el("p", "No active sessions recorded.", "sh-muted")); return; }
+			var table = el("table", null, "sh-table sh-table-stack"), thead = el("thead"), head = el("tr"), body = el("tbody");
+			["User", "Source", "Role", "Signed in", "Last seen", "Address", ""].forEach(function (h) { head.appendChild(el("th", h)); });
+			thead.appendChild(head);
+			table.appendChild(thead);
+			data.sessions.forEach(function (s) {
+				var row = el("tr"), who = el("div", null, "sh-app-cell");
+				who.appendChild(el("b", s.name));
+				if (s.id === data.current) { who.appendChild(el("small", "this session")); }
+				cell(row, "User", who);
+				cell(row, "Source", el("span", s.source, "sh-chip"));
+				cell(row, "Role", s.role);
+				cell(row, "Signed in", ago(new Date(s.created * 1000).toISOString())).title = new Date(s.created * 1000).toLocaleString();
+				cell(row, "Last seen", ago(new Date(s.last_seen * 1000).toISOString())).title = new Date(s.last_seen * 1000).toLocaleString();
+				cell(row, "Address", s.address, "sh-mono");
+				var actions = el("div", null, "sh-row-actions");
+				var one = el("button", "Revoke", "btn btn-sm sh-btn-quiet");
+				one.addEventListener("click", function () { revoke({id: s.id}, "Session"); });
+				var all = el("button", "All of user", "btn btn-sm sh-btn-danger");
+				all.addEventListener("click", function () { revoke({user: s.name, source: s.source}, "Every session of " + s.name); });
+				actions.appendChild(one);
+				actions.appendChild(all);
+				cell(row, "", actions, "text-right");
+				body.appendChild(row);
+			});
+			table.appendChild(body);
+			box.appendChild(table);
+		}).catch(function (error) { setText("sessions-result", error.message); });
+	}
+	if ($("sessions-load")) { $("sessions-load").addEventListener("click", loadSessions); }
+
+	// -- JSON editor (admins) --
+	var fileKey = null, fileVersion = null, text = $("file-text");
+	function validate() {
+		var state = $("file-valid");
+		try { JSON.parse(text.value); state.textContent = "Valid JSON"; state.className = "sh-json-state is-ok"; return true; }
+		catch (error) { state.textContent = error.message; state.className = "sh-json-state is-bad"; return false; }
+	}
+	function loadFile(message) {
+		return api("GET", "/api/admin/files/" + fileKey).then(function (data) {
+			fileVersion = data.version;
+			$("file-box").style.display = "";
+			$("file-hint").style.display = "none";
+			setText("file-path", data.path + (data.exists ? "" : " (does not exist yet)") + (data.note ? " · " + data.note : ""));
+			text.value = data.text;
+			validate();
+			setText("file-result", data.error || message || "");
+		}).catch(function (error) { setText("file-result", error.message); });
+	}
+	function save() {
+		if (!fileKey) { return; }
+		api("POST", "/api/admin/files/" + fileKey, {text: text.value, version: fileVersion})
+			.then(function (data) {
+				if (data.saved) { fileVersion = data.version; }
+				// Reload after saving users, so a password just typed is replaced by the mask.
+				if (data.saved && fileKey === "users") { loadFile(data.message); } else { setText("file-result", data.saved ? data.message : data.error); }
+				$("file-result").className = "small " + (data.saved ? "text-success" : "text-danger");
+			})
+			.catch(function (error) { setText("file-result", error.message); });
+	}
+	if (text) {
+		each("[data-file]", function (b) {
+			b.addEventListener("click", function () {
+				fileKey = b.getAttribute("data-file");
+				each("[data-file]", function (x) { x.classList.toggle("active", x === b); });
+				loadFile();
+			});
+		});
+		text.addEventListener("input", validate);
+		text.addEventListener("keydown", function (event) {
+			if ((event.ctrlKey || event.metaKey) && event.key === "s") { event.preventDefault(); save(); }
+			if (event.key === "Tab") { event.preventDefault(); document.execCommand("insertText", false, "\t"); }
+		});
+		$("file-save").addEventListener("click", save);
+		$("file-reload").addEventListener("click", function () { if (fileKey) { loadFile("Reloaded from disk."); } });
+		$("file-format").addEventListener("click", function () {
+			if (validate()) { text.value = JSON.stringify(JSON.parse(text.value), null, "\t"); }
+		});
+	}
+
+	// -- git (admins) --
+	each("[data-git]", function (b) {
+		b.addEventListener("click", function () {
+			var out = $("git-output");
+			out.style.display = "";
+			out.textContent = "Running…";
+			api("POST", "/api/admin/git/" + b.getAttribute("data-git"), {message: $("git-message").value})
+				.then(function (data) { out.textContent = data.output; })
+				.catch(function (error) { out.textContent = error.message; });
+		});
+	});
+
+	window.addEventListener("hashchange", function () { showTab((location.hash || "#dashboard").slice(1)); });
+	showTab((location.hash || "#dashboard").slice(1));
+	// For admin-editors.js
+	window.shAdmin = {api: api, el: el, clear: clear, openModal: openModal, closeModal: closeModal, toast: toast};
+})();
+</script>
+{% if is_admin %}
+<script type="application/json" id="settings-form">{% raw settings_form %}</script>
+<script type="application/json" id="admin-meta">{% raw admin_meta %}</script>
+<script src="{{ static_url('admin-editors.js') }}"></script>
+{% end %}
+</body>
+</html>

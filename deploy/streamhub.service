@@ -1,0 +1,19 @@
+# systemd unit. Copy to /etc/systemd/system/, adjust paths and user, then:
+#   systemctl daemon-reload && systemctl enable --now streamhub
+[Unit]
+Description=Streamhub
+After=network-online.target
+
+[Service]
+User=streamhub
+WorkingDirectory=/opt/streamhub
+ExecStart=/opt/streamhub/.venv/bin/streamhub run --supervised /etc/streamhub
+EnvironmentFile=-/etc/streamhub/streamhub.env
+# /restart/ exits with code 3; /exit/ exits with 0 and stays down.
+Restart=on-failure
+RestartSec=2
+KillMode=mixed
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

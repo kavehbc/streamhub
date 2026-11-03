@@ -1,0 +1,10 @@
+{# The brand in the top bar: the configured `logo`, else the Streamhub logo (plus `site-title` when it isn't "Streamhub"). #}
+<a class="sh-brand" href="/" aria-label="{{ site_title }}: home">
+{% if logo %}
+	<img class="sh-brand-img" src="{{ logo }}" alt="{{ site_title }}">
+{% else %}
+	<span class="sh-mark" aria-hidden="true"><svg viewBox="0 0 64 64"><g fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"><g opacity=".78"><path d="M14 18 C24 18 24 32 32 32"/><circle cx="14" cy="18" r="2" fill="#fff"/></g><g opacity=".9"><path d="M14 32 H32"/><circle cx="14" cy="32" r="2" fill="#fff"/></g><g opacity=".78"><path d="M14 46 C24 46 24 32 32 32"/><circle cx="14" cy="46" r="2" fill="#fff"/></g><path d="M32 32 H44"/><circle cx="50" cy="32" r="4.6"/></g><circle cx="32" cy="32" r="7" fill="#fff"/></svg></span>
+	<span class="sh-wordmark">streamhub</span>
+	{% if site_title.strip().lower() not in ("streamhub", "streamhub demo") %}<span class="sh-site">{{ site_title }}</span>{% end %}
+{% end %}
+</a>

@@ -1,0 +1,87 @@
+# Streamhub inside a cluster, launching apps with "runtime": "kubernetes" (one Pod + Service per app).
+# Build the hub image with kubectl first: make k8s-image (see deploy/kubernetes/Dockerfile).
+# The ConfigMap is read-only, so an init container copies it into a writable /config (temp, logs, sessions and
+# admin-page saves go there). Admin-page saves last until the pod is replaced: put them back in the ConfigMap, or
+# mount a PersistentVolumeClaim at /config instead of the emptyDir.
+#   kubectl create namespace streamhub
+#   kubectl -n streamhub create secret generic streamhub --from-literal=admin-password=... --from-literal=cookie-secret=...
+#   kubectl -n streamhub create configmap streamhub-config --from-file=config/streamhub.json \
+#     --from-file=config/streamhub-apps.json --from-file=config/streamhub-news.json
+#   kubectl -n streamhub apply -f deploy/kubernetes/streamhub.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: streamhub
+---
+# The hub creates, watches and deletes the app pods and services in its own namespace.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: streamhub-apps
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "services"]
+    verbs: ["get", "list", "watch", "create", "patch", "delete", "deletecollection"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: streamhub-apps
+subjects:
+  - kind: ServiceAccount
+    name: streamhub
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: streamhub-apps
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: streamhub
+spec:
+  replicas: 1  # for more, give each replica its own instance-id (see docs/operations.md, Multiple instances)
+  selector:
+    matchLabels: {app.kubernetes.io/name: streamhub}
+  template:
+    metadata:
+      labels: {app.kubernetes.io/name: streamhub}
+    spec:
+      serviceAccountName: streamhub
+      initContainers:
+        - name: config
+          image: streamhub-kubectl:2.3.0
+          command: ["sh", "-c", "cp -L /config-src/* /config/"]
+          volumeMounts:
+            - {name: config-src, mountPath: /config-src}
+            - {name: config, mountPath: /config}
+      containers:
+        - name: streamhub
+          image: streamhub-kubectl:2.3.0
+          args: ["streamhub", "run", "/config"]
+          ports: [{containerPort: 8500}]
+          env:
+            - name: STREAMHUB_ADMIN_PASSWORD
+              valueFrom: {secretKeyRef: {name: streamhub, key: admin-password}}
+            - name: STREAMHUB_COOKIE_SECRET
+              valueFrom: {secretKeyRef: {name: streamhub, key: cookie-secret}}
+          volumeMounts:
+            - {name: config, mountPath: /config}
+          readinessProbe:
+            httpGet: {path: /api/health, port: 8500}
+      volumes:
+        - name: config-src
+          configMap: {name: streamhub-config}
+        - name: config
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: streamhub
+spec:
+  selector: {app.kubernetes.io/name: streamhub}
+  ports: [{port: 8500, targetPort: 8500}]

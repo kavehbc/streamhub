@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>{{ site_title }} · {% block title %}{% end %}</title>
+	{% include "_head.html" %}
+	{% block head %}{% end %}
+</head>
+<body class="sh-body sh-layout-top sh-page">
+{% include "_nav.html" %}
+<main class="sh-center">
+	<section class="sh-panel {% block panel_class %}{% end %}">
+		{% block panel_top %}{% end %}
+		<h1 class="sh-panel-title">{% block heading %}{% end %}</h1>
+		<div class="sh-panel-body">
+			{% block body %}{% end %}
+		</div>
+	</section>
+</main>
+{% include "_footer.html" %}
+{% include "_ux.html" %}
+</body>
+</html>
