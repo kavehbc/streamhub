@@ -93,6 +93,9 @@ class Browser:
 class HubTestCase(tornado.testing.AsyncHTTPTestCase):
     config = {}
 
+    def runTest(self):
+        pass
+
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.dir = Path(self.tmp.name)
